@@ -55,6 +55,11 @@ UIContext* initUI(GameState *state, GameHistory *history) {
     ui->selectedRow = -1;
     ui->selectedCol = -1;
     ui->pieceSelected = false;
+    ui->dragging = false;
+    ui->dragX = 0;
+    ui->dragY = 0;
+    ui->dragOffsetX = 0;
+    ui->dragOffsetY = 0;
     ui->animating = false;
     ui->hasLastMove = false;
     strcpy(ui->saveFile, "chess_save.pgn");
@@ -141,10 +146,12 @@ UIContext* initUI(GameState *state, GameHistory *history) {
     // Create buttons
     ui->btnHumanVsHuman = createButton(WINDOW_WIDTH/2 - 100, 200, 200, 40, "Human vs Human");
     ui->btnHumanVsAI = createButton(WINDOW_WIDTH/2 - 100, 250, 200, 40, "Human vs AI");
-    ui->btnEasy = createButton(WINDOW_WIDTH/2 - 200, 320, 90, 40, "Easy");
-    ui->btnMedium = createButton(WINDOW_WIDTH/2 - 100, 320, 90, 40, "Medium");
-    ui->btnHard = createButton(WINDOW_WIDTH/2, 320, 90, 40, "Hard");
-    ui->btnExpert = createButton(WINDOW_WIDTH/2 + 100, 320, 90, 40, "Expert");
+    ui->btnSettings = createButton(WINDOW_WIDTH/2 - 100, 300, 200, 40, "Settings");
+    ui->btnEasy = createButton(WINDOW_WIDTH/2 - 200, 220, 90, 40, "Easy");
+    ui->btnMedium = createButton(WINDOW_WIDTH/2 - 100, 220, 90, 40, "Medium");
+    ui->btnHard = createButton(WINDOW_WIDTH/2, 220, 90, 40, "Hard");
+    ui->btnExpert = createButton(WINDOW_WIDTH/2 + 100, 220, 90, 40, "Expert");
+    ui->btnBack = createButton(WINDOW_WIDTH/2 - 60, 300, 120, 40, "Back");
     
     ui->btnNewGame = createButton(20, 20, 120, 30, "New Game");
     ui->btnLoadGame = createButton(20, 60, 120, 30, "Load Game");
@@ -444,15 +451,24 @@ void handleEvent(UIContext *ui, SDL_Event *event) {
         case SDL_MOUSEMOTION:
             mouseX = event->motion.x;
             mouseY = event->motion.y;
-            
+
+            if (ui->dragging) {
+                ui->dragX = mouseX;
+                ui->dragY = mouseY;
+            }
+
             // Update button hover states
             if (ui->state == STATE_MENU) {
                 ui->btnHumanVsHuman.hover = isPointInRect(mouseX, mouseY, &ui->btnHumanVsHuman.rect);
                 ui->btnHumanVsAI.hover = isPointInRect(mouseX, mouseY, &ui->btnHumanVsAI.rect);
+                ui->btnSettings.hover = isPointInRect(mouseX, mouseY, &ui->btnSettings.rect);
+            } else if (ui->state == STATE_SETTINGS) {
                 ui->btnEasy.hover = isPointInRect(mouseX, mouseY, &ui->btnEasy.rect);
                 ui->btnMedium.hover = isPointInRect(mouseX, mouseY, &ui->btnMedium.rect);
                 ui->btnHard.hover = isPointInRect(mouseX, mouseY, &ui->btnHard.rect);
                 ui->btnExpert.hover = isPointInRect(mouseX, mouseY, &ui->btnExpert.rect);
+                ui->btnTheme.hover = isPointInRect(mouseX, mouseY, &ui->btnTheme.rect);
+                ui->btnBack.hover = isPointInRect(mouseX, mouseY, &ui->btnBack.rect);
             } else {
                 ui->btnNewGame.hover = isPointInRect(mouseX, mouseY, &ui->btnNewGame.rect);
                 ui->btnLoadGame.hover = isPointInRect(mouseX, mouseY, &ui->btnLoadGame.rect);
@@ -467,10 +483,10 @@ void handleEvent(UIContext *ui, SDL_Event *event) {
             
         case SDL_MOUSEBUTTONDOWN:
             if (event->button.button != SDL_BUTTON_LEFT) break;
-            
+
             mouseX = event->button.x;
             mouseY = event->button.y;
-            
+
             if (ui->state == STATE_MENU) {
                 // Menu button handling
                 if (isPointInRect(mouseX, mouseY, &ui->btnHumanVsHuman.rect)) {
@@ -485,12 +501,17 @@ void handleEvent(UIContext *ui, SDL_Event *event) {
                     resetGame(ui->gameState, ui->gameHistory);
                     ui->hasLastMove = false;
                     ui->state = STATE_PLAYING;
-                    setMessage(ui, "New game: Human vs AI (%s)", 
+                    setMessage(ui, "New game: Human vs AI (%s)",
                               ui->aiDifficulty == AI_EASY ? "Easy" :
                               ui->aiDifficulty == AI_MEDIUM ? "Medium" :
                               ui->aiDifficulty == AI_HARD ? "Hard" : "Expert");
                 }
-                else if (isPointInRect(mouseX, mouseY, &ui->btnEasy.rect)) {
+                else if (isPointInRect(mouseX, mouseY, &ui->btnSettings.rect)) {
+                    ui->state = STATE_SETTINGS;
+                }
+            }
+            else if (ui->state == STATE_SETTINGS) {
+                if (isPointInRect(mouseX, mouseY, &ui->btnEasy.rect)) {
                     ui->aiDifficulty = AI_EASY;
                 }
                 else if (isPointInRect(mouseX, mouseY, &ui->btnMedium.rect)) {
@@ -501,6 +522,13 @@ void handleEvent(UIContext *ui, SDL_Event *event) {
                 }
                 else if (isPointInRect(mouseX, mouseY, &ui->btnExpert.rect)) {
                     ui->aiDifficulty = AI_EXPERT;
+                }
+                else if (isPointInRect(mouseX, mouseY, &ui->btnTheme.rect)) {
+                    ui->theme = (ui->theme + 1) % 3;
+                    applyTheme(ui);
+                }
+                else if (isPointInRect(mouseX, mouseY, &ui->btnBack.rect)) {
+                    ui->state = STATE_MENU;
                 }
             }
             else if (ui->state == STATE_PLAYING || ui->state == STATE_GAME_OVER) {
@@ -557,16 +585,48 @@ void handleEvent(UIContext *ui, SDL_Event *event) {
                 }
                 
                 // Board interaction (only in playing state)
-                else if (ui->state == STATE_PLAYING && 
+                else if (ui->state == STATE_PLAYING &&
                          mouseX >= BOARD_OFFSET_X && mouseX < BOARD_OFFSET_X + BOARD_SIZE_PX &&
                          mouseY >= BOARD_OFFSET_Y && mouseY < BOARD_OFFSET_Y + BOARD_SIZE_PX) {
-                    
+
                     int col = xToCol(ui, mouseX);
                     int row = yToRow(ui, mouseY);
-                    
+
                     if (!ui->animating) {
-                        selectSquare(ui, row, col);
+                        Piece clickedPiece = getPiece(ui->gameState, row, col);
+                        if (clickedPiece != EMPTY && GET_PIECE_COLOR(clickedPiece) == ui->gameState->turn) {
+                            ui->selectedRow = row;
+                            ui->selectedCol = col;
+                            ui->pieceSelected = true;
+                            ui->dragging = true;
+                            ui->dragX = mouseX;
+                            ui->dragY = mouseY;
+                            ui->dragOffsetX = mouseX - colToX(ui, col);
+                            ui->dragOffsetY = mouseY - rowToY(ui, row);
+                            generateMoves(ui->gameState, &ui->possibleMoves);
+                        } else {
+                            selectSquare(ui, row, col);
+                        }
                     }
+                }
+            }
+            break;
+
+        case SDL_MOUSEBUTTONUP:
+            if (event->button.button != SDL_BUTTON_LEFT) break;
+            mouseX = event->button.x;
+            mouseY = event->button.y;
+
+            if (ui->dragging) {
+                ui->dragging = false;
+                if (ui->state == STATE_PLAYING &&
+                    mouseX >= BOARD_OFFSET_X && mouseX < BOARD_OFFSET_X + BOARD_SIZE_PX &&
+                    mouseY >= BOARD_OFFSET_Y && mouseY < BOARD_OFFSET_Y + BOARD_SIZE_PX) {
+                    int col = xToCol(ui, mouseX);
+                    int row = yToRow(ui, mouseY);
+                    makePlayerMove(ui, row, col);
+                } else {
+                    resetSelection(ui);
                 }
             }
             break;
@@ -709,6 +769,8 @@ void renderUI(UIContext *ui) {
     
     if (ui->state == STATE_MENU) {
         renderMenu(ui);
+    } else if (ui->state == STATE_SETTINGS) {
+        renderSettings(ui);
     } else {
         renderBoard(ui);
         renderPieces(ui);
@@ -850,8 +912,9 @@ void renderBoard(UIContext *ui) {
 void renderPieces(UIContext *ui) {
     for (int row = 0; row < BOARD_SIZE; row++) {
         for (int col = 0; col < BOARD_SIZE; col++) {
-            // Skip the moving piece when animating
-            if (ui->animating && row == ui->animMove.fromRow && col == ui->animMove.fromCol) {
+            // Skip the moving piece when animating or dragging
+            if ((ui->animating && row == ui->animMove.fromRow && col == ui->animMove.fromCol) ||
+                (ui->dragging && row == ui->selectedRow && col == ui->selectedCol)) {
                 continue;
             }
             
@@ -880,6 +943,12 @@ void renderPieces(UIContext *ui) {
         int y = startY + (int)((endY - startY) * progress);
         
         renderPieceAt(ui, piece, x, y);
+    }
+
+    // Render dragged piece on top
+    if (ui->dragging && ui->pieceSelected) {
+        Piece piece = getPiece(ui->gameState, ui->selectedRow, ui->selectedCol);
+        renderPieceAt(ui, piece, ui->dragX - ui->dragOffsetX, ui->dragY - ui->dragOffsetY);
     }
 }
 
@@ -917,6 +986,7 @@ void renderMenu(UIContext *ui) {
     // Draw buttons
     drawButton(ui, &ui->btnHumanVsHuman);
     drawButton(ui, &ui->btnHumanVsAI);
+    drawButton(ui, &ui->btnSettings);
     
     // Draw difficulty buttons (only show when Human vs AI is selected)
     if (ui->gameMode == MODE_HUMAN_VS_AI) {
@@ -955,6 +1025,41 @@ void renderMenu(UIContext *ui) {
         drawButton(ui, &ui->btnHard);
         drawButton(ui, &ui->btnExpert);
     }
+}
+
+// Render settings menu
+void renderSettings(UIContext *ui) {
+    if (ui->largeFont) {
+        SDL_Color titleColor = {255, 255, 255, 255};
+        SDL_Surface *titleSurface = TTF_RenderText_Blended(ui->largeFont, "Settings", titleColor);
+        if (titleSurface) {
+            SDL_Texture *titleTexture = SDL_CreateTextureFromSurface(ui->renderer, titleSurface);
+            if (titleTexture) {
+                SDL_Rect titleRect = {
+                    WINDOW_WIDTH/2 - titleSurface->w/2,
+                    100,
+                    titleSurface->w,
+                    titleSurface->h
+                };
+                SDL_RenderCopy(ui->renderer, titleTexture, NULL, &titleRect);
+                SDL_DestroyTexture(titleTexture);
+            }
+            SDL_FreeSurface(titleSurface);
+        }
+    }
+
+    // Highlight selected difficulty
+    if (ui->aiDifficulty == AI_EASY) ui->btnEasy.hover = true;
+    if (ui->aiDifficulty == AI_MEDIUM) ui->btnMedium.hover = true;
+    if (ui->aiDifficulty == AI_HARD) ui->btnHard.hover = true;
+    if (ui->aiDifficulty == AI_EXPERT) ui->btnExpert.hover = true;
+
+    drawButton(ui, &ui->btnEasy);
+    drawButton(ui, &ui->btnMedium);
+    drawButton(ui, &ui->btnHard);
+    drawButton(ui, &ui->btnExpert);
+    drawButton(ui, &ui->btnTheme);
+    drawButton(ui, &ui->btnBack);
 }
 
 // Render game over screen

@@ -99,9 +99,11 @@ GUI Features
 – The board is drawn with alternating light and dark squares.
 – Highlights selected pieces and valid moves.
 – Highlights the last move made.
+– Supports drag-and-drop piece movement in addition to clicks.
 • Buttons:
 – Buttons for starting a new game, saving/loading, undoing moves,
 and resigning.
+– A dedicated Settings menu accessible from the main menu.
 • Captured Pieces:
 – Displays captured pieces and material advantage.
 • Game Over Screen:

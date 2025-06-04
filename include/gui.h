@@ -45,6 +45,7 @@ typedef enum {
 // UI states
 typedef enum {
     STATE_MENU,
+    STATE_SETTINGS,
     STATE_PLAYING,
     STATE_GAME_OVER
 } UIState;
@@ -87,6 +88,13 @@ typedef struct {
     int animFrame;
     Move animMove;
 
+    // Drag state
+    bool dragging;
+    int dragX;
+    int dragY;
+    int dragOffsetX;
+    int dragOffsetY;
+
     // Last move for highlighting
     Move lastMove;
     bool hasLastMove;
@@ -105,6 +113,8 @@ typedef struct {
     Button btnTheme;
     Button btnHumanVsHuman;
     Button btnHumanVsAI;
+    Button btnSettings;
+    Button btnBack;
     Button btnEasy;
     Button btnMedium;
     Button btnHard;
@@ -130,6 +140,7 @@ void renderUI(UIContext *ui);
 void renderBoard(UIContext *ui);
 void renderPieces(UIContext *ui);
 void renderMenu(UIContext *ui);
+void renderSettings(UIContext *ui);
 void renderGameOverScreen(UIContext *ui);
 void renderButtons(UIContext *ui);
 void renderMessage(UIContext *ui);
