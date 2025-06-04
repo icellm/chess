@@ -1,0 +1,416 @@
+Chess Game Project Explanation
+1 Overview of the Project
+This project is a chess game implemented in C with a graphical user interface
+(GUI) built using SDL2 (Simple DirectMedia Layer). The project consists
+of the following key components:
+• Game Logic: Handles the rules of chess, move validation, and game
+state management.
+• Artificial Intelligence (AI): Implements a chess AI using the minimax algorithm with alpha-beta pruning.
+• Graphical User Interface (GUI): Provides a visual representation
+of the chessboard and allows user interaction.
+• Save/Load System: Saves and loads games in PGN (Portable Game
+Notation) format.
+2 File Breakdown
+2.1 main.c
+This is the entry point of the program. It initializes the game state, history,
+and GUI, and starts the main game loop.
+Key Functions
+• main:
+– Initializes the game state (GameState) and history (GameHistory).
+– Calls initUI to set up the GUI.
+– Runs the game loop using runUI.
+– Cleans up resources using cleanupUI.
+1
+2.2 chess.h and chess.c
+These files implement the core chess logic, including the board representation,
+move validation, and game state management.
+Key Structures
+• GameState:
+– Represents the chessboard, turn, castling rights, en passant column, and move counters.
+• Move:
+– Represents a single move, including the source and destination
+squares and promotion piece (if applicable).
+• GameHistory:
+– Stores the history of moves for undo/redo functionality and PGN
+generation.
+Key Functions
+• initializeGame: Sets up the chessboard with the initial positions of
+all pieces.
+• isValidMove: Validates whether a move is legal according to chess
+rules.
+• makeMove: Executes a move and updates the game state.
+• undoMove: Reverts the last move.
+• isCheckmate, isStalemate, isDraw: Checks for game-ending conditions.
+• saveGame and loadGame: Save and load the game in PGN format.
+2.3 ai.h and ai.c
+These files implement the chess AI using the minimax algorithm with alphabeta pruning.
+2
+Key Functions
+• getBestMove: Selects the best move for the AI based on the current
+game state and difficulty level.
+• minimax: Recursively evaluates moves to determine the best outcome
+for the AI.
+• evaluatePosition: Assigns a score to the current board position based
+on material, mobility, pawn structure, king safety, and center control.
+• quiescenceSearch: Extends the minimax algorithm to avoid the ”horizon effect” by evaluating only capture moves.
+AI Features
+• Piece-Square Tables: Assigns positional values to pieces based on
+their location on the board.
+• Difficulty Levels: Limits the depth of the minimax search to adjust
+the AI’s strength.
+2.4 ui.h and ui.c
+These files handle the graphical user interface (GUI) using SDL2. The GUI
+allows players to interact with the game visually.
+Key Structures
+• UIContext:
+– Stores the SDL window, renderer, fonts, game state, and UI elements (e.g., buttons).
+• Button:
+– Represents a clickable button in the GUI.
+Key Functions
+• Initialization:
+– initUI: Initializes SDL, creates the window and renderer, and
+loads fonts and textures.
+3
+– cleanupUI: Frees all resources and shuts down SDL.
+• Rendering:
+– renderUI: Renders the entire UI, including the chessboard, pieces,
+buttons, and messages.
+– renderBoard: Draws the chessboard.
+– renderPieces: Draws the chess pieces on the board.
+– renderMenu: Displays the main menu with buttons for game
+modes and difficulty selection.
+• Event Handling:
+– handleEvent: Processes user input (mouse clicks, key presses)
+and updates the game state accordingly.
+– selectSquare: Handles piece selection and movement.
+• Animation:
+– Animates piece movement for a smoother user experience.
+• Messages:
+– Displays messages (e.g., ”Checkmate!” or ”Game saved successfully”) at the bottom of the screen.
+GUI Features
+• Chessboard:
+– The board is drawn with alternating light and dark squares.
+– Highlights selected pieces and valid moves.
+• Buttons:
+– Buttons for starting a new game, saving/loading, undoing moves,
+and resigning.
+• Captured Pieces:
+– Displays captured pieces and material advantage.
+• Game Over Screen:
+– Displays a semi-transparent overlay with the game result.
+4
+2.5 assets/
+This folder contains the resources used by the GUI:
+• fonts/DejaVuSans.ttf: The font used for rendering text in the GUI.
+• pieces/: PNG images of chess pieces (e.g., white king.png, black pawn.png).
+2.6 chess save.pgn and famous chess.pgn
+These files store chess games in PGN format:
+• chess save.pgn: Used for saving and loading the current game.
+• famous chess.pgn: Contains a famous historical chess game (”The
+Immortal Game”).
+3 How the Components Work Together
+1. Initialization:
+• The program starts in main.c, where the game state, history, and
+GUI are initialized.
+• The chessboard is set up with the initial positions of all pieces.
+2. Game Loop:
+• The main loop in runUI handles events (e.g., mouse clicks), updates the game state, and renders the UI.
+3. Player Interaction:
+• Players interact with the game by clicking on pieces and squares.
+• The GUI highlights valid moves and animates piece movement.
+4. AI Moves:
+• If the game mode is Human vs. AI, the AI calculates its move
+using getBestMove and executes it.
+5. Game State Updates:
+• The game state is updated after each move, and the program
+checks for checkmate, stalemate, or draw conditions.
+5
+6. Saving and Loading:
+• Players can save the game to chess save.pgn or load a saved
+game.
+7. Game Over:
+• When the game ends, the GUI displays the result (e.g., ”Checkmate! White wins!”).
+6
+
+  Chess Project Documentation
+Adrian Cojocaru
+Dan Serban
+May 21, 2025
+Contents
+1 Introduction 2
+2 Project Structure 2
+3 Core Game Logic (chess.h, chess.c) 2
+3.1 chess.h . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 2
+3.1.1 Constants and Macros . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 2
+3.1.2 Data Structures . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 2
+3.1.3 Function Prototypes . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 3
+3.2 chess.c . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 3
+3.2.1 Key Functions . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 3
+4 Artificial Intelligence (ai.h, ai.c) 3
+4.1 ai.h . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 3
+4.1.1 Data Structures . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 4
+4.1.2 External Variables . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 4
+4.1.3 Function Prototypes . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 4
+4.2 ai.c . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 4
+4.2.1 Piece-Square Tables . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 4
+4.2.2 Piece Values . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 4
+4.2.3 Key Functions . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 4
+5 User Interface (ui.h, ui.c) 5
+5.1 ui.h . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 5
+5.1.1 Constants . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 5
+5.1.2 Data Structures . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 5
+5.1.3 Function Prototypes . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 5
+5.2 ui.c . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 5
+5.2.1 Global Variables . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 5
+5.2.2 Key Functions . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 6
+6 Main Program (main.c) 6
+6.1 main() . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 6
+7 Assets 7
+7.1 assets/fonts/ . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 7
+7.2 assets/pieces/ . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 7
+8 Save/Load Mechanism (chess save.pgn) 7
+9 Compilation 7
+10 Conclusion 8
+1
+1 Introduction
+This document provides an overview of the Chess MOR project, a C-based chess game featuring an AI
+opponent and a graphical user interface using SDL2. The project is structured into several modules
+handling game logic, AI, UI, and main program execution.
+2 Project Structure
+The project consists of the following main components:
+• Core Game Logic: Handles the rules of chess, board representation, move generation, and game
+state management. (Files: chess.h, chess.c)
+• Artificial Intelligence: Implements the AI opponent, including move evaluation and search
+algorithms. (Files: ai.h, ai.c)
+• User Interface: Manages the graphical display, user input, and interaction using SDL2. (Files:
+ui.h, ui.c)
+• Main Program: Initializes the game and UI, and serves as the entry point. (File: main.c)
+• Assets: External resources like fonts and piece images. (Directory: assets/)
+• Save Files: Game state persistence using PGN format. (Example: chess save.pgn)
+3 Core Game Logic (chess.h, chess.c)
+3.1 chess.h
+This header file defines the fundamental data structures and function prototypes for the chess game logic.
+3.1.1 Constants and Macros
+• BOARD SIZE: Defines the board dimension (8x8).
+• WHITE, BLACK: Represent player colors.
+• Piece type constants: EMPTY, PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING.
+• Piece manipulation macros: CREATE PIECE, GET PIECE TYPE, GET PIECE COLOR, SET PIECE MOVED,
+HAS PIECE MOVED. These macros work with the Piece typedef.
+3.1.2 Data Structures
+• Piece: uint8 t representing a piece. Bits encode type, color, and moved status.
+• Color: uint8 t for player color.
+• GameState: Contains the entire state of the game:
+– board[BOARD SIZE][BOARD SIZE]: 2D array of Piece.
+– turn: Current player’s turn (Color).
+– castlingRights[2][2]: Boolean flags for castling availability.
+– enPassantCol: Column for en passant, -1 if none.
+– halfMoveClock: For 50-move rule.
+– fullMoveNumber: Game’s move count.
+– capturedPieces[2][6]: Counts of captured pieces.
+• Move: Represents a single move with from/to coordinates and promotion piece.
+• MoveList: A list of possible moves (Move moves[256]) and their count.
+2
+• MoveHistory: Stores information about a single past move for undo functionality, including the
+GameState before the move, the move itself, captured piece, and flags for special moves.
+• GameHistory: Contains an array of MoveHistory for undo/redo, PGN string, and related counters.
+3.1.3 Function Prototypes
+Declares functions for:
+• Game initialization: initializeGame(), resetGame().
+• Move generation and validation: isValidMove(), generateMoves(), isInCheck(), isCheckmate(),
+isStalemate(), isDraw(), etc.
+• Move execution: makeMove(), undoMove(), redoMove().
+• Utility functions: getPiece(), setPiece(), isSquareAttacked(), algebraic notation conversion
+(algebraicToMove(), moveToAlgebraic()), PGN handling.
+• Save/Load: saveGame(), loadGame().
+• Debugging: printBoard(), getPieceChar().
+3.2 chess.c
+This file implements the functions declared in chess.h.
+3.2.1 Key Functions
+• initializeGame(): Sets up the board to the standard starting chess position and initializes game
+state variables.
+• getPiece()/setPiece(): Safe accessors for the game board.
+• isSquareAttacked(): Determines if a given square is attacked by a specified color. Checks pawn,
+knight, sliding pieces (rook, bishop, queen), and king attacks.
+• isInCheck(): Uses isSquareAttacked() to determine if a player’s king is in check.
+• isValidMove(): A crucial function that validates a move based on piece type, board boundaries, piece-specific movement rules (including pawn double moves, diagonal captures, en passant),
+castling rules, and ensures the move does not leave the player’s own king in check.
+• generateMoves(): Generates all legal moves for the current player by iterating through all pieces of
+the current player’s color and, for each piece, checking all its potential moves using isValidMove().
+• makeMove(): Applies a given Move to the GameState. It updates piece positions, handles captures,
+promotions, en passant, castling, updates castling rights, half-move clock, full-move number, and
+switches turns. It also records the move in GameHistory.
+• undoMove(): Reverts the last move made using the stored MoveHistory. Restores piece positions,
+captured pieces, and game state variables like turn, en passant status, and castling rights.
+• saveGame()/loadGame(): Handle game persistence by writing/reading game data to/from a PGN
+(Portable Game Notation) file. saveGame writes headers and the PGN move list. loadGame parses
+a PGN file and reconstructs the game state by making each move.
+• Draw condition checks: isStalemate(), isFiftyMoveDraw(), isInsufficientMaterial(), isThreefoldRepetiti4 Artificial Intelligence (ai.h, ai.c)
+4.1 ai.h
+Defines the interface for the AI module.
+3
+4.1.1 Data Structures
+• AIDifficulty: Enum for AI difficulty levels (AI EASY, AI MEDIUM, AI HARD, AI EXPERT), which
+typically correspond to search depth.
+4.1.2 External Variables
+Declares extern const int arrays for piece-square tables, which are defined in ai.c. These tables assign
+positional values to pieces on different squares. (PAWN TABLE, KNIGHT TABLE, BISHOP TABLE, ROOK TABLE,
+QUEEN TABLE, KING TABLE MIDDLE, KING TABLE END).
+4.1.3 Function Prototypes
+• getBestMove(): Main function to get the AI’s chosen move.
+• evaluatePosition(): Evaluates the board from the current player’s perspective.
+• minimax(): Implements the minimax search algorithm with alpha-beta pruning.
+• quiescenceSearch(): A search extension to handle tactical sequences (captures) beyond the main
+search depth.
+• Evaluation helper functions: isEndgame(), materialScore(), mobilityScore(), pawnStructureScore(),
+kingSafetyScore(), centerControlScore().
+4.2 ai.c
+Implements the AI logic.
+4.2.1 Piece-Square Tables
+Contains the definitions for the piece-square tables. These tables provide bonuses or penalties for pieces
+based on their location, encouraging, for example, knights in the center or discouraging pawns on their
+starting squares too long. Values are typically for White; for Black, the board index is mirrored.
+4.2.2 Piece Values
+Defines base material values for each piece type (e.g., PAWN VALUE = 100).
+4.2.3 Key Functions
+• getBestMove(): Iterates through all legal moves, calls minimax() for each, and selects the move
+with the best score. It may also add randomness by choosing among moves with scores close to
+the best.
+• minimax(): A recursive function that explores the game tree to a certain depth. It uses alpha-beta
+pruning to cut off branches of the search tree that are guaranteed not to lead to a better move. It
+alternates between maximizing (AI’s turn) and minimizing (opponent’s turn) evaluation scores.
+• quiescenceSearch(): Called when the minimax search reaches its depth limit. It continues searching only capture moves to avoid the ”horizon effect” where a tactical sequence might be cut off
+prematurely.
+• evaluatePosition(): The core evaluation function. It sums up scores from various heuristics:
+– materialScore(): Considers the material balance and applies piece-square table values.
+– mobilityScore(): Rewards having more legal moves.
+– pawnStructureScore(): Penalizes doubled/isolated pawns and rewards passed pawns.
+– kingSafetyScore(): Rewards king shields (e.g., castled position with pawn cover) and penalizes exposed kings.
+– centerControlScore(): Rewards control of central squares.
+• isEndgame(): Determines if the game is in an endgame phase, which can trigger different evaluation
+logic (e.g., using KING TABLE END instead of KING TABLE MIDDLE).
+4
+5 User Interface (ui.h, ui.c)
+5.1 ui.h
+Defines constants, data structures, and function prototypes for the SDL2-based user interface.
+5.1.1 Constants
+• Window and board dimensions: WINDOW WIDTH, WINDOW HEIGHT, BOARD SIZE PX, SQUARE SIZE,
+BOARD OFFSET X, BOARD OFFSET Y.
+• UI Colors: Predefined RGBA hex values for various UI elements (e.g., COLOR LIGHT, COLOR DARK,
+COLOR SELECTED).
+5.1.2 Data Structures
+• GameMode: Enum for game modes (MODE HUMAN VS HUMAN, MODE HUMAN VS AI).
+• UIState: Enum for different UI states (STATE MENU, STATE PLAYING, STATE GAME OVER).
+• Button: Struct to represent a UI button, containing its SDL Rect, text, and hover state.
+• UIContext: A central struct holding all UI-related data:
+– SDL components: SDL Window*, SDL Renderer*, TTF Font* (normal and large).
+– Pointers to game data: GameState*, GameHistory*.
+– UI and game settings: GameMode, AIDifficulty, UIState.
+– Selection state: selectedRow, selectedCol, pieceSelected, possibleMoves.
+– Animation state: animating, animFrame, animMove.
+– Button instances for various actions (new game, load, save, undo, difficulty, etc.).
+– Message display: message string and messageTime for temporary messages.
+5.1.3 Function Prototypes
+Declares functions for:
+• UI lifecycle: initUI(), cleanupUI(), runUI().
+• Event handling: handleEvent().
+• Rendering: renderUI() (main renderer), renderBoard(), renderPieces(), renderMenu(), etc.
+• Game interaction logic: selectSquare(), makePlayerMove(), makeAIMove().
+• UI helpers: setMessage(), createButton(), drawButton().
+• Texture management: loadPieceTextures(), freePieceTextures(), renderPieceAt().
+5.2 ui.c
+Implements the UI functionality using SDL2, SDL ttf, and SDL image.
+5.2.1 Global Variables
+• SDL Texture *pieceTextures[2][7]: Array to store textures for each piece type and color.
+5
+5.2.2 Key Functions
+• initUI(): Initializes SDL, SDL ttf, and SDL image. Creates the main window and renderer.
+Loads fonts (from assets/fonts/ or system fallbacks) and piece textures. Initializes UI buttons
+and sets the initial UI state.
+• cleanupUI(): Frees all allocated SDL resources (textures, fonts, renderer, window) and quits SDL
+subsystems.
+• loadPieceTextures(): Attempts to load piece images (PNGs) from the assets/pieces/ directory. If loading fails (e.g., files missing), it creates procedural fallback textures (drawing piece
+symbols like ’P’, ’N’ using TTF RenderText).
+• runUI(): Contains the main game loop. It continuously handles events, updates game state
+(including AI moves and animations), and renders the UI, aiming for approximately 60 FPS.
+• handleEvent(): Processes SDL events. Handles mouse motion for button hover effects. Handles
+mouse clicks for button interactions (menu navigation, game actions like new game, save, load,
+undo, resign) and board clicks (selecting pieces, making moves). Handles keyboard events (e.g.,
+ESC for menu).
+• selectSquare(): Logic for when a player clicks on a square on the board. Manages piece selection,
+deselection, and generating possible moves for the selected piece.
+• makePlayerMove(): Attempts to make a move chosen by the human player. Validates the move
+against the generated possibleMoves. Handles pawn promotion (currently defaults to Queen,
+TODO for selection). Initiates move animation.
+• makeAIMove(): Called when it’s the AI’s turn. Gets the best move from getBestMove() and
+initiates its animation and execution.
+• Rendering functions (renderUI(), renderBoard(), renderPieces(), etc.): These functions are
+responsible for drawing all visual elements.
+– renderBoard(): Draws the chessboard squares, highlights selected squares and possible
+moves, and draws board coordinates.
+– renderPieces(): Renders all pieces on the board using their textures. Handles smooth
+animation of the last moved piece.
+– renderMenu(): Draws the main menu screen with game mode and difficulty selection buttons.
+– renderButtons(): Draws interactive buttons on the screen.
+– renderCapturedPieces(): Displays pieces captured by each side and material advantage.
+– renderMessage(): Displays temporary messages to the user (e.g., ”Check!”, ”Game Saved”).
+• drawButton(): Renders a single button with text and hover effect.
+6 Main Program (main.c)
+6.1 main()
+The entry point of the application.
+• Seeds the random number generator using srand((unsigned int)time(NULL)).
+• Initializes the GameState by calling initializeGame().
+• Initializes the GameHistory.
+• Initializes the UI by calling initUI(), passing the game state and history.
+• Starts the main game loop by calling runUI().
+• Cleans up UI resources by calling cleanupUI() upon exiting the game loop.
+6
+7 Assets
+The assets/ directory contains external resources used by the game.
+7.1 assets/fonts/
+• DejaVuSans.ttf: The primary font file used for rendering text in the UI. If not found, the UI
+attempts to load system default fonts.
+7.2 assets/pieces/
+This directory should contain PNG images for each chess piece. The loadPieceTextures() function in
+ui.c expects files named in the format <color> <piece name>.png.
+• Example: white pawn.png, black knight.png, etc.
+• There are 6 piece types (pawn, knight, bishop, rook, queen, king) and 2 colors (white, black), so
+12 images are expected.
+• If these images are not found, the UI will render text-based representations of the pieces.
+8 Save/Load Mechanism (chess save.pgn)
+The game supports saving and loading game states using the PGN (Portable Game Notation) format.
+• The default save file is chess save.pgn.
+• Saving: The saveGame() function (in chess.c) writes the current game to a PGN file. This
+includes standard PGN headers (Event, Site, Date, White, Black, Result) and the sequence of
+moves made in algebraic notation.
+• Loading: The loadGame() function (in chess.c) reads a PGN file. It resets the game state and
+then processes each move in the PGN file sequentially using makeMove() to reconstruct the game
+position.
+• The PGN format stored includes the move number, and moves in standard algebraic notation (e.g.,
+”e2-e4”, ”g8-f6”). Promotions are also handled (e.g., ”e7-e8=Q”).
+An example of chess save.pgn content:
+1 [ Event " Chess Game "]
+2 [ Site " Local Game "]
+3 [ Date " May 22 2025"]
+4 [ Round "?"]
+5 [ White " Player 1"]
+6 [ Black " Player 2"]
+7 [ Result "*"]
+8
+9 1. d2 -d4 *
+Listing 1: Example chess save.pgn
+The ‘*‘ indicates an ongoing game. Results like ”1-0”, ”0-1”, or ”1/2-1/2” would appear for completed
+games.
+9 Compilation
+To compile the project on a Linux system with GCC and the necessary SDL2 libraries installed, use the
+following command:
+gcc -o chess_game ai.c chess.c main.c ui.c \
+$(sdl2-config --cflags --libs) -lSDL2_ttf -lSDL2_image -lm
+This command links against SDL2, SDL2 ttf, SDL2 image, and the math library. Ensure that the
+development libraries for SDL2 are installed (e.g., libsdl2-dev, libsdl2-ttf-dev, libsdl2-image-dev
+on Debian-based systems).
+7
+10 Conclusion
+This document provides a high-level overview of the Chess project. Each module plays a distinct role
+in creating a functional chess game with an AI opponent and a graphical interface. Further detailed
+documentation could delve into specific algorithms, data structure optimizations, and UI design choices.
+8
