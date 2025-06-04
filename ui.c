@@ -32,7 +32,7 @@ static inline int xToCol(UIContext *ui, int x) {
 }
 
 // Initialize UI and SDL components
-UIContext* initUI(GameState *state, GameHistory *history) {
+UIContext* initUI(GameState *state, GameHistory *history, Settings *settings) {
     UIContext *ui = (UIContext*)malloc(sizeof(UIContext));
     if (!ui) {
         fprintf(stderr, "Failed to allocate UI context\n");
@@ -42,11 +42,20 @@ UIContext* initUI(GameState *state, GameHistory *history) {
     memset(ui, 0, sizeof(UIContext));
     ui->gameState = state;
     ui->gameHistory = history;
+    ui->settings = settings;
     ui->state = STATE_MENU;
     ui->gameMode = MODE_HUMAN_VS_HUMAN;
     ui->aiDifficulty = AI_MEDIUM;
     ui->theme = THEME_CLASSIC;
     ui->flipBoard = false;
+
+    if (settings) {
+        ui->gameMode = settings->mode;
+        ui->aiDifficulty = settings->difficulty;
+        ui->theme = settings->theme ? THEME_ALT : THEME_CLASSIC;
+        ui->flipBoard = settings->flipBoard;
+        strncpy(ui->saveFile, settings->pgnFile, sizeof(ui->saveFile)-1);
+    }
     ui->lightColor = THEME_CLASSIC_LIGHT;
     ui->darkColor = THEME_CLASSIC_DARK;
     ui->backgroundColor = COLOR_BACKGROUND;
@@ -55,7 +64,9 @@ UIContext* initUI(GameState *state, GameHistory *history) {
     ui->pieceSelected = false;
     ui->animating = false;
     ui->hasLastMove = false;
-    strcpy(ui->saveFile, "chess_save.pgn");
+    if (!settings) {
+        strcpy(ui->saveFile, "chess_save.pgn");
+    }
     
     // Initialize SDL
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
@@ -476,6 +487,7 @@ void handleEvent(UIContext *ui, SDL_Event *event) {
                 // Menu button handling
                 if (isPointInRect(mouseX, mouseY, &ui->btnHumanVsHuman.rect)) {
                     ui->gameMode = MODE_HUMAN_VS_HUMAN;
+                    if (ui->settings) ui->settings->mode = ui->gameMode;
                     resetGame(ui->gameState, ui->gameHistory);
                     ui->hasLastMove = false;
                     ui->state = STATE_PLAYING;
@@ -483,25 +495,30 @@ void handleEvent(UIContext *ui, SDL_Event *event) {
                 }
                 else if (isPointInRect(mouseX, mouseY, &ui->btnHumanVsAI.rect)) {
                     ui->gameMode = MODE_HUMAN_VS_AI;
+                    if (ui->settings) ui->settings->mode = ui->gameMode;
                     resetGame(ui->gameState, ui->gameHistory);
                     ui->hasLastMove = false;
                     ui->state = STATE_PLAYING;
-                    setMessage(ui, "New game: Human vs AI (%s)", 
+                    setMessage(ui, "New game: Human vs AI (%s)",
                               ui->aiDifficulty == AI_EASY ? "Easy" :
                               ui->aiDifficulty == AI_MEDIUM ? "Medium" :
                               ui->aiDifficulty == AI_HARD ? "Hard" : "Expert");
                 }
                 else if (isPointInRect(mouseX, mouseY, &ui->btnEasy.rect)) {
                     ui->aiDifficulty = AI_EASY;
+                    if (ui->settings) ui->settings->difficulty = ui->aiDifficulty;
                 }
                 else if (isPointInRect(mouseX, mouseY, &ui->btnMedium.rect)) {
                     ui->aiDifficulty = AI_MEDIUM;
+                    if (ui->settings) ui->settings->difficulty = ui->aiDifficulty;
                 }
                 else if (isPointInRect(mouseX, mouseY, &ui->btnHard.rect)) {
                     ui->aiDifficulty = AI_HARD;
+                    if (ui->settings) ui->settings->difficulty = ui->aiDifficulty;
                 }
                 else if (isPointInRect(mouseX, mouseY, &ui->btnExpert.rect)) {
                     ui->aiDifficulty = AI_EXPERT;
+                    if (ui->settings) ui->settings->difficulty = ui->aiDifficulty;
                 }
             }
             else if (ui->state == STATE_PLAYING || ui->state == STATE_GAME_OVER) {
@@ -551,10 +568,12 @@ void handleEvent(UIContext *ui, SDL_Event *event) {
                 }
                 else if (isPointInRect(mouseX, mouseY, &ui->btnFlipBoard.rect)) {
                     ui->flipBoard = !ui->flipBoard;
+                    if (ui->settings) ui->settings->flipBoard = ui->flipBoard;
                 }
                 else if (isPointInRect(mouseX, mouseY, &ui->btnTheme.rect)) {
                     ui->theme = (ui->theme == THEME_CLASSIC) ? THEME_ALT : THEME_CLASSIC;
                     applyTheme(ui);
+                    if (ui->settings) ui->settings->theme = (ui->theme == THEME_ALT);
                 }
                 
                 // Board interaction (only in playing state)
