@@ -1054,7 +1054,7 @@ void algebraicToMove(const char *algebraic, Move *move) {
 }
 
 // Convert a Move struct to algebraic notation
-void moveToAlgebraic(const GameState *state, Move move, char *algebraic) {
+void moveToAlgebraic(Move move, char *algebraic) {
     algebraic[0] = 'a' + move.fromCol;
     algebraic[1] = '1' + move.fromRow;
     algebraic[2] = '-';
@@ -1079,7 +1079,7 @@ void moveToAlgebraic(const GameState *state, Move move, char *algebraic) {
 // Add a move to the PGN record
 void addMoveToPGN(GameState *state, Move move, GameHistory *history) {
     char algebraic[10];
-    moveToAlgebraic(state, move, algebraic);
+    moveToAlgebraic(move, algebraic);
     
     char pgnMove[20];
     if (state->turn == BLACK) { // The move was made by White

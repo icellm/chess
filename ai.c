@@ -347,7 +347,6 @@ int mobilityScore(const GameState *state) {
     const int MOBILITY_WEIGHT = 10;
     
     // Count legal moves for each side
-    Color originalTurn = state->turn;
     int whiteMoves = 0;
     int blackMoves = 0;
     

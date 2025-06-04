@@ -19,6 +19,8 @@
 #define THEME_CLASSIC_DARK  0xB58863FF
 #define THEME_ALT_LIGHT     0xCAD2C5FF
 #define THEME_ALT_DARK      0x2F3E46FF
+#define THEME_NEON_LIGHT    0x39FF14FF
+#define THEME_NEON_DARK     0x091833FF
 
 #define COLOR_SELECTED 0xF7F76BFF // Selected square
 #define COLOR_MOVE 0x706396FF   // Possible move
@@ -36,7 +38,8 @@ typedef enum {
 
 typedef enum {
     THEME_CLASSIC,
-    THEME_ALT
+    THEME_ALT,
+    THEME_NEON
 } UITheme;
 
 // UI states
@@ -148,7 +151,7 @@ void drawButton(UIContext *ui, Button *button);
 
 // Piece image loading and rendering
 void loadPieceTextures(UIContext *ui);
-void freePieceTextures(UIContext *ui);
+void freePieceTextures(void);
 void renderPieceAt(UIContext *ui, Piece piece, int x, int y);
 
 #endif /* UI_H */
