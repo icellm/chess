@@ -1,7 +1,7 @@
 CC=gcc
-CFLAGS=-Wall -Wextra -std=c11 $(shell sdl2-config --cflags)
+CFLAGS=-Wall -Wextra -std=c11 -Iinclude $(shell sdl2-config --cflags)
 LDFLAGS=$(shell sdl2-config --libs) -lSDL2_ttf -lSDL2_image -lm
-OBJS=ai.o chess.o ui.o main.o
+OBJS=src/engine.o src/board.o src/gui.o src/main.o
 TARGET=chess_game
 
 all: $(TARGET)

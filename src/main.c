@@ -2,9 +2,9 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
-#include "chess.h"
-#include "ai.h"
-#include "ui.h"
+#include "board.h"
+#include "engine.h"
+#include "gui.h"
 
 int main(int argc, char *argv[]) {
     // Seed random number generator
