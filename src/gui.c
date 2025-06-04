@@ -6,7 +6,9 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 #include <SDL2/SDL_image.h>
-#include "ui.h"
+#include "gui.h"
+#include "board.h"
+#include "engine.h"
 
 // Piece textures
 SDL_Texture *pieceTextures[2][7]; // [color][piece type]
@@ -162,7 +164,7 @@ UIContext* initUI(GameState *state, GameHistory *history) {
 void cleanupUI(UIContext *ui) {
     if (!ui) return;
     
-    freePieceTextures(ui); // Pass ui context
+    freePieceTextures();
     
     if (ui->largeFont) TTF_CloseFont(ui->largeFont);
     if (ui->font) TTF_CloseFont(ui->font);
@@ -181,7 +183,7 @@ void loadPieceTextures(UIContext *ui) {
     // Free existing textures first if any
     // This call might be problematic if pieceTextures is global and not tied to a specific ui instance yet.
     // However, to match the signature:
-    freePieceTextures(ui); // Pass ui context
+    freePieceTextures();
 
     // Initialize texture array
     memset(pieceTextures, 0, sizeof(pieceTextures));
@@ -219,7 +221,7 @@ void loadPieceTextures(UIContext *ui) {
         fprintf(stderr, "Failed to load piece textures, creating procedural ones\n");
         
         // Free any textures that were loaded
-        freePieceTextures(ui);
+        freePieceTextures();
         
         // Create procedural textures
         SDL_Color colors[2] = {
@@ -264,7 +266,7 @@ void loadPieceTextures(UIContext *ui) {
 }
 
 // Free piece textures
-void freePieceTextures(UIContext *ui) { // Add UIContext *ui parameter
+void freePieceTextures(void) {
     for (int color = 0; color < 2; color++) {
         for (int piece = 1; piece <= 6; piece++) {
             if (pieceTextures[color][piece]) {
@@ -368,7 +370,6 @@ void setMessage(UIContext *ui, const char *format, ...) {
 void runUI(UIContext *ui) {
     bool running = true;
     SDL_Event event;
-    Uint32 lastTime = SDL_GetTicks();
     
     while (running) {
         // Handle events
@@ -382,8 +383,6 @@ void runUI(UIContext *ui) {
         
         // Update
         Uint32 currentTime = SDL_GetTicks();
-        float deltaTime = (currentTime - lastTime) / 1000.0f;
-        lastTime = currentTime;
         
         // Handle AI move if it's AI's turn
         if (ui->state == STATE_PLAYING && 
@@ -553,7 +552,7 @@ void handleEvent(UIContext *ui, SDL_Event *event) {
                     ui->flipBoard = !ui->flipBoard;
                 }
                 else if (isPointInRect(mouseX, mouseY, &ui->btnTheme.rect)) {
-                    ui->theme = (ui->theme == THEME_CLASSIC) ? THEME_ALT : THEME_CLASSIC;
+                    ui->theme = (ui->theme + 1) % 3;
                     applyTheme(ui);
                 }
                 
@@ -583,8 +582,7 @@ void handleEvent(UIContext *ui, SDL_Event *event) {
 // Handle square selection and move logic
 void selectSquare(UIContext *ui, int row, int col) {
     // Ignore if it's not the player's turn
-    if ((ui->gameMode == MODE_HUMAN_VS_AI && ui->gameState->turn == BLACK) ||
-        ui->gameState->turn != WHITE && ui->gameMode == MODE_HUMAN_VS_AI) {
+    if (ui->gameMode == MODE_HUMAN_VS_AI && ui->gameState->turn != WHITE) {
         return;
     }
     
@@ -890,7 +888,12 @@ void renderMenu(UIContext *ui) {
     // Draw title
     if (ui->largeFont) {
         SDL_Color titleColor = {255, 255, 255, 255};
-        SDL_Surface *titleSurface = TTF_RenderText_Blended(ui->largeFont, "Chess Game", titleColor);
+        const char *titleText = "Chess Game";
+        if (ui->theme == THEME_NEON) {
+            titleColor.r = 57;  titleColor.g = 255; titleColor.b = 20;
+            titleText = "Neon Chess";
+        }
+        SDL_Surface *titleSurface = TTF_RenderText_Blended(ui->largeFont, titleText, titleColor);
         
         if (titleSurface) {
             SDL_Texture *titleTexture = SDL_CreateTextureFromSurface(ui->renderer, titleSurface);
@@ -1307,13 +1310,22 @@ void renderMoveHistory(UIContext *ui) {
 
 // Apply color theme to UI
 void applyTheme(UIContext *ui) {
-    if (ui->theme == THEME_ALT) {
+    switch (ui->theme) {
+    case THEME_ALT:
         ui->lightColor = THEME_ALT_LIGHT;
         ui->darkColor = THEME_ALT_DARK;
         ui->backgroundColor = 0x1E1E1EFF;
-    } else {
+        break;
+    case THEME_NEON:
+        ui->lightColor = THEME_NEON_LIGHT;
+        ui->darkColor = THEME_NEON_DARK;
+        ui->backgroundColor = 0x000000FF;
+        break;
+    case THEME_CLASSIC:
+    default:
         ui->lightColor = THEME_CLASSIC_LIGHT;
         ui->darkColor = THEME_CLASSIC_DARK;
         ui->backgroundColor = COLOR_BACKGROUND;
+        break;
     }
 }

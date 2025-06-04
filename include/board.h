@@ -1,5 +1,5 @@
-#ifndef CHESS_H
-#define CHESS_H
+#ifndef BOARD_H
+#define BOARD_H
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -91,7 +91,7 @@ Piece getPiece(const GameState *state, int row, int col);
 void setPiece(GameState *state, int row, int col, Piece piece);
 bool isSquareAttacked(const GameState *state, int row, int col, Color attackingColor);
 void algebraicToMove(const char *algebraic, Move *move);
-void moveToAlgebraic(const GameState *state, Move move, char *algebraic);
+void moveToAlgebraic(Move move, char *algebraic);
 void addMoveToPGN(GameState *state, Move move, GameHistory *history);
 
 // Save and load game
@@ -109,4 +109,4 @@ bool loadGame(GameState *state, GameHistory *history, const char *filename);
 void printBoard(const GameState *state);
 char getPieceChar(Piece piece);
 
-#endif /* CHESS_H */
+#endif /* BOARD_H */

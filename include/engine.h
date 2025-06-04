@@ -1,7 +1,7 @@
-#ifndef AI_H
-#define AI_H
+#ifndef ENGINE_H
+#define ENGINE_H
 
-#include "chess.h"
+#include "board.h"
 
 // AI difficulty levels
 typedef enum {
@@ -32,4 +32,4 @@ int pawnStructureScore(const GameState *state);
 int kingSafetyScore(const GameState *state);
 int centerControlScore(const GameState *state);
 
-#endif /* AI_H */
+#endif /* ENGINE_H */

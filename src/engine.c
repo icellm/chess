@@ -3,7 +3,8 @@
 #include <string.h>
 #include <limits.h>
 #include <time.h>
-#include "ai.h"
+#include "engine.h"
+#include "board.h"
 
 // Piece-Square Tables (adapted from chess programming wiki)
 // Values are for white pieces. For black pieces, the tables are flipped.
@@ -347,7 +348,6 @@ int mobilityScore(const GameState *state) {
     const int MOBILITY_WEIGHT = 10;
     
     // Count legal moves for each side
-    Color originalTurn = state->turn;
     int whiteMoves = 0;
     int blackMoves = 0;
     
