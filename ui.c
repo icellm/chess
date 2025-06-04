@@ -11,8 +11,28 @@
 // Piece textures
 SDL_Texture *pieceTextures[2][7]; // [color][piece type]
 
+static inline int rowToY(UIContext *ui, int row) {
+    return ui->flipBoard ? BOARD_OFFSET_Y + row * SQUARE_SIZE
+                          : BOARD_OFFSET_Y + (7 - row) * SQUARE_SIZE;
+}
+
+static inline int colToX(UIContext *ui, int col) {
+    return ui->flipBoard ? BOARD_OFFSET_X + (7 - col) * SQUARE_SIZE
+                          : BOARD_OFFSET_X + col * SQUARE_SIZE;
+}
+
+static inline int yToRow(UIContext *ui, int y) {
+    int r = (y - BOARD_OFFSET_Y) / SQUARE_SIZE;
+    return ui->flipBoard ? r : 7 - r;
+}
+
+static inline int xToCol(UIContext *ui, int x) {
+    int c = (x - BOARD_OFFSET_X) / SQUARE_SIZE;
+    return ui->flipBoard ? 7 - c : c;
+}
+
 // Initialize UI and SDL components
-UIContext* initUI(GameState *state, GameHistory *history) {
+UIContext* initUI(GameState *state, GameHistory *history, Settings *settings) {
     UIContext *ui = (UIContext*)malloc(sizeof(UIContext));
     if (!ui) {
         fprintf(stderr, "Failed to allocate UI context\n");
@@ -22,13 +42,31 @@ UIContext* initUI(GameState *state, GameHistory *history) {
     memset(ui, 0, sizeof(UIContext));
     ui->gameState = state;
     ui->gameHistory = history;
+    ui->settings = settings;
     ui->state = STATE_MENU;
     ui->gameMode = MODE_HUMAN_VS_HUMAN;
     ui->aiDifficulty = AI_MEDIUM;
+    ui->theme = THEME_CLASSIC;
+    ui->flipBoard = false;
+
+    if (settings) {
+        ui->gameMode = settings->mode;
+        ui->aiDifficulty = settings->difficulty;
+        ui->theme = settings->theme ? THEME_ALT : THEME_CLASSIC;
+        ui->flipBoard = settings->flipBoard;
+        strncpy(ui->saveFile, settings->pgnFile, sizeof(ui->saveFile)-1);
+    }
+    ui->lightColor = THEME_CLASSIC_LIGHT;
+    ui->darkColor = THEME_CLASSIC_DARK;
+    ui->backgroundColor = COLOR_BACKGROUND;
     ui->selectedRow = -1;
     ui->selectedCol = -1;
     ui->pieceSelected = false;
     ui->animating = false;
+    ui->hasLastMove = false;
+    if (!settings) {
+        strcpy(ui->saveFile, "chess_save.pgn");
+    }
     
     // Initialize SDL
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
@@ -123,7 +161,11 @@ UIContext* initUI(GameState *state, GameHistory *history) {
     ui->btnUndo = createButton(20, 140, 120, 30, "Undo Move");
     ui->btnResign = createButton(20, 180, 120, 30, "Resign");
     ui->btnMainMenu = createButton(20, 220, 120, 30, "Main Menu");
-    
+    ui->btnFlipBoard = createButton(20, 260, 120, 30, "Flip Board");
+    ui->btnTheme = createButton(20, 300, 120, 30, "Change Theme");
+
+    applyTheme(ui);
+
     return ui;
 }
 
@@ -430,6 +472,8 @@ void handleEvent(UIContext *ui, SDL_Event *event) {
                 ui->btnUndo.hover = isPointInRect(mouseX, mouseY, &ui->btnUndo.rect);
                 ui->btnResign.hover = isPointInRect(mouseX, mouseY, &ui->btnResign.rect);
                 ui->btnMainMenu.hover = isPointInRect(mouseX, mouseY, &ui->btnMainMenu.rect);
+                ui->btnFlipBoard.hover = isPointInRect(mouseX, mouseY, &ui->btnFlipBoard.rect);
+                ui->btnTheme.hover = isPointInRect(mouseX, mouseY, &ui->btnTheme.rect);
             }
             break;
             
@@ -443,41 +487,50 @@ void handleEvent(UIContext *ui, SDL_Event *event) {
                 // Menu button handling
                 if (isPointInRect(mouseX, mouseY, &ui->btnHumanVsHuman.rect)) {
                     ui->gameMode = MODE_HUMAN_VS_HUMAN;
+                    if (ui->settings) ui->settings->mode = ui->gameMode;
                     resetGame(ui->gameState, ui->gameHistory);
+                    ui->hasLastMove = false;
                     ui->state = STATE_PLAYING;
                     setMessage(ui, "New game: Human vs Human");
                 }
                 else if (isPointInRect(mouseX, mouseY, &ui->btnHumanVsAI.rect)) {
                     ui->gameMode = MODE_HUMAN_VS_AI;
+                    if (ui->settings) ui->settings->mode = ui->gameMode;
                     resetGame(ui->gameState, ui->gameHistory);
+                    ui->hasLastMove = false;
                     ui->state = STATE_PLAYING;
-                    setMessage(ui, "New game: Human vs AI (%s)", 
+                    setMessage(ui, "New game: Human vs AI (%s)",
                               ui->aiDifficulty == AI_EASY ? "Easy" :
                               ui->aiDifficulty == AI_MEDIUM ? "Medium" :
                               ui->aiDifficulty == AI_HARD ? "Hard" : "Expert");
                 }
                 else if (isPointInRect(mouseX, mouseY, &ui->btnEasy.rect)) {
                     ui->aiDifficulty = AI_EASY;
+                    if (ui->settings) ui->settings->difficulty = ui->aiDifficulty;
                 }
                 else if (isPointInRect(mouseX, mouseY, &ui->btnMedium.rect)) {
                     ui->aiDifficulty = AI_MEDIUM;
+                    if (ui->settings) ui->settings->difficulty = ui->aiDifficulty;
                 }
                 else if (isPointInRect(mouseX, mouseY, &ui->btnHard.rect)) {
                     ui->aiDifficulty = AI_HARD;
+                    if (ui->settings) ui->settings->difficulty = ui->aiDifficulty;
                 }
                 else if (isPointInRect(mouseX, mouseY, &ui->btnExpert.rect)) {
                     ui->aiDifficulty = AI_EXPERT;
+                    if (ui->settings) ui->settings->difficulty = ui->aiDifficulty;
                 }
             }
             else if (ui->state == STATE_PLAYING || ui->state == STATE_GAME_OVER) {
                 // Game UI button handling
                 if (isPointInRect(mouseX, mouseY, &ui->btnNewGame.rect)) {
                     resetGame(ui->gameState, ui->gameHistory);
+                    ui->hasLastMove = false;
                     ui->state = STATE_PLAYING;
                     setMessage(ui, "New game started");
                 }
                 else if (isPointInRect(mouseX, mouseY, &ui->btnLoadGame.rect)) {
-                    if (loadGame(ui->gameState, ui->gameHistory, "chess_save.pgn")) {
+                    if (loadGame(ui->gameState, ui->gameHistory, ui->saveFile)) {
                         ui->state = STATE_PLAYING;
                         setMessage(ui, "Game loaded successfully");
                     } else {
@@ -485,7 +538,7 @@ void handleEvent(UIContext *ui, SDL_Event *event) {
                     }
                 }
                 else if (isPointInRect(mouseX, mouseY, &ui->btnSaveGame.rect)) {
-                    if (saveGame(ui->gameState, ui->gameHistory, "chess_save.pgn")) {
+                    if (saveGame(ui->gameState, ui->gameHistory, ui->saveFile)) {
                         setMessage(ui, "Game saved successfully");
                     } else {
                         setMessage(ui, "Failed to save game");
@@ -494,11 +547,13 @@ void handleEvent(UIContext *ui, SDL_Event *event) {
                 else if (isPointInRect(mouseX, mouseY, &ui->btnUndo.rect)) {
                     if (ui->gameMode == MODE_HUMAN_VS_HUMAN) {
                         undoMove(ui->gameState, ui->gameHistory);
+                        ui->hasLastMove = false;
                         setMessage(ui, "Move undone");
                     } else if (ui->gameMode == MODE_HUMAN_VS_AI) {
                         // Undo both AI and human moves
                         undoMove(ui->gameState, ui->gameHistory);
                         undoMove(ui->gameState, ui->gameHistory);
+                        ui->hasLastMove = false;
                         setMessage(ui, "Move undone");
                     }
                 }
@@ -511,14 +566,23 @@ void handleEvent(UIContext *ui, SDL_Event *event) {
                 else if (isPointInRect(mouseX, mouseY, &ui->btnMainMenu.rect)) {
                     ui->state = STATE_MENU;
                 }
+                else if (isPointInRect(mouseX, mouseY, &ui->btnFlipBoard.rect)) {
+                    ui->flipBoard = !ui->flipBoard;
+                    if (ui->settings) ui->settings->flipBoard = ui->flipBoard;
+                }
+                else if (isPointInRect(mouseX, mouseY, &ui->btnTheme.rect)) {
+                    ui->theme = (ui->theme == THEME_CLASSIC) ? THEME_ALT : THEME_CLASSIC;
+                    applyTheme(ui);
+                    if (ui->settings) ui->settings->theme = (ui->theme == THEME_ALT);
+                }
                 
                 // Board interaction (only in playing state)
                 else if (ui->state == STATE_PLAYING && 
                          mouseX >= BOARD_OFFSET_X && mouseX < BOARD_OFFSET_X + BOARD_SIZE_PX &&
                          mouseY >= BOARD_OFFSET_Y && mouseY < BOARD_OFFSET_Y + BOARD_SIZE_PX) {
                     
-                    int col = (mouseX - BOARD_OFFSET_X) / SQUARE_SIZE;
-                    int row = 7 - (mouseY - BOARD_OFFSET_Y) / SQUARE_SIZE; // Flip row for chess notation
+                    int col = xToCol(ui, mouseX);
+                    int row = yToRow(ui, mouseY);
                     
                     if (!ui->animating) {
                         selectSquare(ui, row, col);
@@ -624,6 +688,8 @@ void makePlayerMove(UIContext *ui, int toRow, int toCol) {
         
         // Execute the move
         makeMove(ui->gameState, move, ui->gameHistory);
+        ui->lastMove = move;
+        ui->hasLastMove = true;
         
         // Reset selection
         resetSelection(ui);
@@ -647,15 +713,17 @@ void makeAIMove(UIContext *ui) {
     
     // Execute the move
     makeMove(ui->gameState, aiMove, ui->gameHistory);
+    ui->lastMove = aiMove;
+    ui->hasLastMove = true;
 }
 
 // Render the entire UI
 void renderUI(UIContext *ui) {
     // Set background color
-    Uint8 bgR = (COLOR_BACKGROUND >> 24) & 0xFF;
-    Uint8 bgG = (COLOR_BACKGROUND >> 16) & 0xFF;
-    Uint8 bgB = (COLOR_BACKGROUND >> 8) & 0xFF;
-    Uint8 bgA = COLOR_BACKGROUND & 0xFF;
+    Uint8 bgR = (ui->backgroundColor >> 24) & 0xFF;
+    Uint8 bgG = (ui->backgroundColor >> 16) & 0xFF;
+    Uint8 bgB = (ui->backgroundColor >> 8) & 0xFF;
+    Uint8 bgA = ui->backgroundColor & 0xFF;
     
     SDL_SetRenderDrawColor(ui->renderer, bgR, bgG, bgB, bgA);
     SDL_RenderClear(ui->renderer);
@@ -666,6 +734,7 @@ void renderUI(UIContext *ui) {
         renderBoard(ui);
         renderPieces(ui);
         renderButtons(ui);
+        renderMoveHistory(ui);
         renderCapturedPieces(ui);
         
         if (ui->state == STATE_GAME_OVER) {
@@ -685,30 +754,37 @@ void renderBoard(UIContext *ui) {
     for (int row = 0; row < BOARD_SIZE; row++) {
         for (int col = 0; col < BOARD_SIZE; col++) {
             // Set square position
-            square.x = BOARD_OFFSET_X + col * SQUARE_SIZE;
-            square.y = BOARD_OFFSET_Y + (7 - row) * SQUARE_SIZE; // Flip board
+            square.x = colToX(ui, col);
+            square.y = rowToY(ui, row);
             
             // Determine square color (light or dark)
             Uint32 color;
             if ((row + col) % 2 == 0) {
-                color = COLOR_LIGHT;
+                color = ui->lightColor;
             } else {
-                color = COLOR_DARK;
+                color = ui->darkColor;
             }
             
+            // Highlight last move squares
+            if (ui->hasLastMove &&
+                ((row == ui->lastMove.fromRow && col == ui->lastMove.fromCol) ||
+                 (row == ui->lastMove.toRow && col == ui->lastMove.toCol))) {
+                color = COLOR_LAST_MOVE;
+            }
+
             // Highlight selected square
             if (ui->pieceSelected && row == ui->selectedRow && col == ui->selectedCol) {
                 color = COLOR_SELECTED;
             }
-            
+
             // Highlight possible moves
             if (ui->pieceSelected) {
                 for (int i = 0; i < ui->possibleMoves.count; i++) {
-                    if (ui->possibleMoves.moves[i].fromRow == ui->selectedRow && 
+                    if (ui->possibleMoves.moves[i].fromRow == ui->selectedRow &&
                         ui->possibleMoves.moves[i].fromCol == ui->selectedCol &&
-                        ui->possibleMoves.moves[i].toRow == row && 
+                        ui->possibleMoves.moves[i].toRow == row &&
                         ui->possibleMoves.moves[i].toCol == col) {
-                        
+
                         color = COLOR_MOVE;
                         break;
                     }
@@ -750,7 +826,7 @@ void renderBoard(UIContext *ui) {
                 
                 if (textTexture) {
                     SDL_Rect textRect = {
-                        BOARD_OFFSET_X + col * SQUARE_SIZE + SQUARE_SIZE/2 - textSurface->w/2,
+                        colToX(ui, col) + SQUARE_SIZE/2 - textSurface->w/2,
                         BOARD_OFFSET_Y + BOARD_SIZE_PX + 5,
                         textSurface->w,
                         textSurface->h
@@ -766,7 +842,8 @@ void renderBoard(UIContext *ui) {
         
         // Rank labels (1-8)
         for (int row = 0; row < BOARD_SIZE; row++) {
-            char label[2] = {(char)('1' + row), '\0'};
+            int rank = ui->flipBoard ? 8 - row : row + 1;
+            char label[2] = {(char)('0' + rank), '\0'};
             SDL_Surface *textSurface = TTF_RenderText_Blended(ui->font, label, textColor);
             
             if (textSurface) {
@@ -775,7 +852,7 @@ void renderBoard(UIContext *ui) {
                 if (textTexture) {
                     SDL_Rect textRect = {
                         BOARD_OFFSET_X - textSurface->w - 5,
-                        BOARD_OFFSET_Y + (7 - row) * SQUARE_SIZE + SQUARE_SIZE/2 - textSurface->h/2,
+                        rowToY(ui, row) + SQUARE_SIZE/2 - textSurface->h/2,
                         textSurface->w,
                         textSurface->h
                     };
@@ -802,8 +879,8 @@ void renderPieces(UIContext *ui) {
             Piece piece = getPiece(ui->gameState, row, col);
             if (piece == EMPTY) continue;
             
-            int x = BOARD_OFFSET_X + col * SQUARE_SIZE;
-            int y = BOARD_OFFSET_Y + (7 - row) * SQUARE_SIZE; // Flip board
+            int x = colToX(ui, col);
+            int y = rowToY(ui, row);
             
             renderPieceAt(ui, piece, x, y);
         }
@@ -815,10 +892,10 @@ void renderPieces(UIContext *ui) {
         
         // Linear interpolation for position
         float progress = ui->animFrame / 10.0f;
-        int startX = BOARD_OFFSET_X + ui->animMove.fromCol * SQUARE_SIZE;
-        int startY = BOARD_OFFSET_Y + (7 - ui->animMove.fromRow) * SQUARE_SIZE;
-        int endX = BOARD_OFFSET_X + ui->animMove.toCol * SQUARE_SIZE;
-        int endY = BOARD_OFFSET_Y + (7 - ui->animMove.toRow) * SQUARE_SIZE;
+        int startX = colToX(ui, ui->animMove.fromCol);
+        int startY = rowToY(ui, ui->animMove.fromRow);
+        int endX = colToX(ui, ui->animMove.toCol);
+        int endY = rowToY(ui, ui->animMove.toRow);
         
         int x = startX + (int)((endX - startX) * progress);
         int y = startY + (int)((endY - startY) * progress);
@@ -941,6 +1018,8 @@ void renderButtons(UIContext *ui) {
     drawButton(ui, &ui->btnUndo);
     drawButton(ui, &ui->btnResign);
     drawButton(ui, &ui->btnMainMenu);
+    drawButton(ui, &ui->btnFlipBoard);
+    drawButton(ui, &ui->btnTheme);
     
     // Render current player's turn
     if (ui->font) {
@@ -1194,5 +1273,66 @@ void renderCapturedPieces(UIContext *ui) {
             
             SDL_FreeSurface(pieceSurface);
         }
+    }
+}
+
+// Render list of recent moves on the right side of the board
+void renderMoveHistory(UIContext *ui) {
+    if (!ui->font) return;
+
+    char pgnCopy[8192];
+    strncpy(pgnCopy, ui->gameHistory->pgn, sizeof(pgnCopy)-1);
+    pgnCopy[sizeof(pgnCopy)-1] = '\0';
+
+    const char *tokens[256];
+    int count = 0;
+
+    char *token = strtok(pgnCopy, " \n\r");
+    while (token && count < 256) {
+        if (strchr(token, '.')) {
+            token = strtok(NULL, " \n\r");
+            continue;
+        }
+        tokens[count++] = token;
+        token = strtok(NULL, " \n\r");
+    }
+
+    int start = (count > 16) ? count - 16 : 0; // show last 8 moves
+    int y = BOARD_OFFSET_Y;
+
+    for (int i = start; i < count; i += 2) {
+        char line[32];
+        int moveNum = i/2 + 1;
+        if (i + 1 < count) {
+            snprintf(line, sizeof(line), "%d. %s %s", moveNum, tokens[i], tokens[i+1]);
+        } else {
+            snprintf(line, sizeof(line), "%d. %s", moveNum, tokens[i]);
+        }
+
+        SDL_Color textColor = {200, 200, 200, 255};
+        SDL_Surface *surf = TTF_RenderText_Blended(ui->font, line, textColor);
+        if (surf) {
+            SDL_Texture *tex = SDL_CreateTextureFromSurface(ui->renderer, surf);
+            if (tex) {
+                SDL_Rect rect = {BOARD_OFFSET_X + BOARD_SIZE_PX + 10, y, surf->w, surf->h};
+                SDL_RenderCopy(ui->renderer, tex, NULL, &rect);
+                SDL_DestroyTexture(tex);
+            }
+            SDL_FreeSurface(surf);
+        }
+        y += 18;
+    }
+}
+
+// Apply color theme to UI
+void applyTheme(UIContext *ui) {
+    if (ui->theme == THEME_ALT) {
+        ui->lightColor = THEME_ALT_LIGHT;
+        ui->darkColor = THEME_ALT_DARK;
+        ui->backgroundColor = 0x1E1E1EFF;
+    } else {
+        ui->lightColor = THEME_CLASSIC_LIGHT;
+        ui->darkColor = THEME_CLASSIC_DARK;
+        ui->backgroundColor = COLOR_BACKGROUND;
     }
 }

@@ -20,7 +20,14 @@ Key Functions
 – Calls initUI to set up the GUI.
 – Runs the game loop using runUI.
 – Cleans up resources using cleanupUI.
-1
+– Supports command line options:
+  • --ai <easy|medium|hard|expert> to start in Human vs AI mode with the
+    chosen difficulty.
+  • --load <file> to begin from a saved PGN file.
+  • --pgn <file> to specify the save/load PGN filename used by the UI.
+  • --flip to start with the board flipped for Black's perspective.
+  • --theme <alt> to use the alternate board color theme.
+  • --settings <file> to load and save user preferences.
 2.2 chess.h and chess.c
 These files implement the core chess logic, including the board representation,
 move validation, and game state management.
@@ -91,6 +98,7 @@ GUI Features
 • Chessboard:
 – The board is drawn with alternating light and dark squares.
 – Highlights selected pieces and valid moves.
+– Highlights the last move made.
 • Buttons:
 – Buttons for starting a new game, saving/loading, undoing moves,
 and resigning.
@@ -103,9 +111,9 @@ and resigning.
 This folder contains the resources used by the GUI:
 • fonts/DejaVuSans.ttf: The font used for rendering text in the GUI.
 • pieces/: PNG images of chess pieces (e.g., white king.png, black pawn.png).
-2.6 chess save.pgn and famous chess.pgn
+2.6 chess_save.pgn and famous chess.pgn
 These files store chess games in PGN format:
-• chess save.pgn: Used for saving and loading the current game.
+• chess_save.pgn: Used for saving and loading the current game.
 • famous chess.pgn: Contains a famous historical chess game (”The
 Immortal Game”).
 3 How the Components Work Together
@@ -126,7 +134,7 @@ using getBestMove and executes it.
 checks for checkmate, stalemate, or draw conditions.
 5
 6. Saving and Loading:
-• Players can save the game to chess save.pgn or load a saved
+• Players can save the game to chess_save.pgn or load a saved
 game.
 7. Game Over:
 • When the game ends, the GUI displays the result (e.g., ”Checkmate! White wins!”).
@@ -168,7 +176,7 @@ Contents
 7 Assets 7
 7.1 assets/fonts/ . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 7
 7.2 assets/pieces/ . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 7
-8 Save/Load Mechanism (chess save.pgn) 7
+8 Save/Load Mechanism (chess_save.pgn) 7
 9 Compilation 7
 10 Conclusion 8
 1
@@ -186,7 +194,7 @@ algorithms. (Files: ai.h, ai.c)
 ui.h, ui.c)
 • Main Program: Initializes the game and UI, and serves as the entry point. (File: main.c)
 • Assets: External resources like fonts and piece images. (Directory: assets/)
-• Save Files: Game state persistence using PGN format. (Example: chess save.pgn)
+• Save Files: Game state persistence using PGN format. (Example: chess_save.pgn)
 3 Core Game Logic (chess.h, chess.c)
 3.1 chess.h
 This header file defines the fundamental data structures and function prototypes for the chess game logic.
@@ -298,7 +306,8 @@ BOARD OFFSET X, BOARD OFFSET Y.
 • UI Colors: Predefined RGBA hex values for various UI elements (e.g., COLOR LIGHT, COLOR DARK,
 COLOR SELECTED).
 5.1.2 Data Structures
-• GameMode: Enum for game modes (MODE HUMAN VS HUMAN, MODE HUMAN VS AI).
+• GameMode: Enum for game modes (MODE HUMAN VS HUMAN, MODE HUMAN VS AI)
+  defined in settings.h.
 • UIState: Enum for different UI states (STATE MENU, STATE PLAYING, STATE GAME OVER).
 • Button: Struct to represent a UI button, containing its SDL Rect, text, and hover state.
 • UIContext: A central struct holding all UI-related data:
@@ -360,7 +369,7 @@ The entry point of the application.
 • Seeds the random number generator using srand((unsigned int)time(NULL)).
 • Initializes the GameState by calling initializeGame().
 • Initializes the GameHistory.
-• Initializes the UI by calling initUI(), passing the game state and history.
+• Initializes the UI by calling initUI(), passing the game state, history and loaded settings.
 • Starts the main game loop by calling runUI().
 • Cleans up UI resources by calling cleanupUI() upon exiting the game loop.
 6
@@ -376,9 +385,9 @@ ui.c expects files named in the format <color> <piece name>.png.
 • There are 6 piece types (pawn, knight, bishop, rook, queen, king) and 2 colors (white, black), so
 12 images are expected.
 • If these images are not found, the UI will render text-based representations of the pieces.
-8 Save/Load Mechanism (chess save.pgn)
+8 Save/Load Mechanism (chess_save.pgn)
 The game supports saving and loading game states using the PGN (Portable Game Notation) format.
-• The default save file is chess save.pgn.
+• The default save file is chess_save.pgn.
 • Saving: The saveGame() function (in chess.c) writes the current game to a PGN file. This
 includes standard PGN headers (Event, Site, Date, White, Black, Result) and the sequence of
 moves made in algebraic notation.
@@ -387,7 +396,7 @@ then processes each move in the PGN file sequentially using makeMove() to recons
 position.
 • The PGN format stored includes the move number, and moves in standard algebraic notation (e.g.,
 ”e2-e4”, ”g8-f6”). Promotions are also handled (e.g., ”e7-e8=Q”).
-An example of chess save.pgn content:
+An example of chess_save.pgn content:
 1 [ Event " Chess Game "]
 2 [ Site " Local Game "]
 3 [ Date " May 22 2025"]
@@ -397,20 +406,25 @@ An example of chess save.pgn content:
 7 [ Result "*"]
 8
 9 1. d2 -d4 *
-Listing 1: Example chess save.pgn
+Listing 1: Example chess_save.pgn
 The ‘*‘ indicates an ongoing game. Results like ”1-0”, ”0-1”, or ”1/2-1/2” would appear for completed
 games.
+9 Settings File (settings.cfg)
+User preferences are persisted in a simple key=value configuration file. Example contents:
+```
+mode=human_vs_ai
+difficulty=medium
+theme=alt
+flip=true
+pgn_file=chess_save.pgn
+```
+The file is loaded at startup (overridable via `--settings`) and saved when the program exits.
 9 Compilation
-To compile the project on a Linux system with GCC and the necessary SDL2 libraries installed, use the
-following command:
-gcc -o chess_game ai.c chess.c main.c ui.c \
-$(sdl2-config --cflags --libs) -lSDL2_ttf -lSDL2_image -lm
-This command links against SDL2, SDL2 ttf, SDL2 image, and the math library. Ensure that the
-development libraries for SDL2 are installed (e.g., libsdl2-dev, libsdl2-ttf-dev, libsdl2-image-dev
-on Debian-based systems).
-7
+Compilation is managed via the provided Makefile.
+Run `make` on Linux to build the native binary.
+To cross-compile for Windows (requires the mingw-w64 toolchain and SDL2 development libs) run
+`make windows`. The result is `chess_game.exe`.
 10 Conclusion
 This document provides a high-level overview of the Chess project. Each module plays a distinct role
 in creating a functional chess game with an AI opponent and a graphical interface. Further detailed
 documentation could delve into specific algorithms, data structure optimizations, and UI design choices.
-8
