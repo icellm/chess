@@ -15,11 +15,15 @@
 #define BOARD_OFFSET_Y 60
 
 // UI colors
-#define COLOR_LIGHT 0xEED6B9FF  // Light square
-#define COLOR_DARK 0xB58863FF   // Dark square
+#define THEME_CLASSIC_LIGHT 0xEED6B9FF
+#define THEME_CLASSIC_DARK  0xB58863FF
+#define THEME_ALT_LIGHT     0xCAD2C5FF
+#define THEME_ALT_DARK      0x2F3E46FF
+
 #define COLOR_SELECTED 0xF7F76BFF // Selected square
 #define COLOR_MOVE 0x706396FF   // Possible move
-#define COLOR_BACKGROUND 0x282C34FF // Background
+#define COLOR_LAST_MOVE 0x6BA8F7FF // Highlight for last move
+#define COLOR_BACKGROUND 0x282C34FF // Default background
 #define COLOR_TEXT 0xABB2BFFF   // Text color
 #define COLOR_BUTTON 0x5C6370FF // Button color
 #define COLOR_BUTTON_HOVER 0x767D89FF // Button hover color
@@ -29,6 +33,11 @@ typedef enum {
     MODE_HUMAN_VS_HUMAN,
     MODE_HUMAN_VS_AI
 } GameMode;
+
+typedef enum {
+    THEME_CLASSIC,
+    THEME_ALT
+} UITheme;
 
 // UI states
 typedef enum {
@@ -56,6 +65,12 @@ typedef struct {
     GameHistory *gameHistory;
     GameMode gameMode;
     AIDifficulty aiDifficulty;
+    UITheme theme;
+    bool flipBoard;
+
+    Uint32 lightColor;
+    Uint32 darkColor;
+    Uint32 backgroundColor;
     UIState state;
     
     // Selection and move state
@@ -68,6 +83,13 @@ typedef struct {
     bool animating;
     int animFrame;
     Move animMove;
+
+    // Last move for highlighting
+    Move lastMove;
+    bool hasLastMove;
+
+    // PGN file path for saving/loading
+    char saveFile[256];
     
     // Menu buttons
     Button btnNewGame;
@@ -76,6 +98,8 @@ typedef struct {
     Button btnUndo;
     Button btnResign;
     Button btnMainMenu;
+    Button btnFlipBoard;
+    Button btnTheme;
     Button btnHumanVsHuman;
     Button btnHumanVsAI;
     Button btnEasy;
@@ -107,6 +131,8 @@ void renderGameOverScreen(UIContext *ui);
 void renderButtons(UIContext *ui);
 void renderMessage(UIContext *ui);
 void renderCapturedPieces(UIContext *ui);
+void renderMoveHistory(UIContext *ui);
+void applyTheme(UIContext *ui);
 
 // Game logic
 void selectSquare(UIContext *ui, int row, int col);
