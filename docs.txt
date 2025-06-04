@@ -101,6 +101,9 @@ GUI Features
 – Highlights selected pieces and valid moves.
 – Highlights the last move made.
 – Supports drag-and-drop piece movement in addition to clicks.
+– Uses a larger 1200×800 window with a 640 px board so text and
+  buttons never overlap.
+– Text is rendered in larger fonts for readability.
 • Buttons:
 – Buttons for starting a new game, saving/loading, undoing moves,
 and resigning.

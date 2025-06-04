@@ -116,22 +116,22 @@ UIContext* initUI(GameState *state, GameHistory *history) {
     }
     
     // Load fonts
-    ui->font = TTF_OpenFont("assets/fonts/DejaVuSans.ttf", 16);
-    ui->largeFont = TTF_OpenFont("assets/fonts/DejaVuSans.ttf", 24);
+    ui->font = TTF_OpenFont("assets/fonts/DejaVuSans.ttf", 20);
+    ui->largeFont = TTF_OpenFont("assets/fonts/DejaVuSans.ttf", 32);
     if (!ui->font || !ui->largeFont) {
         fprintf(stderr, "Font loading error: %s\n", TTF_GetError());
         fprintf(stderr, "Trying to load system font...\n");
         
         // Try system font paths as fallback
         #ifdef _WIN32
-        ui->font = TTF_OpenFont("C:/Windows/Fonts/arial.ttf", 16);
-        ui->largeFont = TTF_OpenFont("C:/Windows/Fonts/arial.ttf", 24);
+        ui->font = TTF_OpenFont("C:/Windows/Fonts/arial.ttf", 20);
+        ui->largeFont = TTF_OpenFont("C:/Windows/Fonts/arial.ttf", 32);
         #elif __APPLE__
-        ui->font = TTF_OpenFont("/Library/Fonts/Arial.ttf", 16);
-        ui->largeFont = TTF_OpenFont("/Library/Fonts/Arial.ttf", 24);
+        ui->font = TTF_OpenFont("/Library/Fonts/Arial.ttf", 20);
+        ui->largeFont = TTF_OpenFont("/Library/Fonts/Arial.ttf", 32);
         #else // Linux
-        ui->font = TTF_OpenFont("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 16);
-        ui->largeFont = TTF_OpenFont("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 24);
+        ui->font = TTF_OpenFont("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 20);
+        ui->largeFont = TTF_OpenFont("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 32);
         #endif
         
         if (!ui->font || !ui->largeFont) {
@@ -147,19 +147,19 @@ UIContext* initUI(GameState *state, GameHistory *history) {
     ui->btnHumanVsHuman = createButton(WINDOW_WIDTH/2 - 100, 180, 200, 40, "Human vs Human");
     ui->btnHumanVsAI = createButton(WINDOW_WIDTH/2 - 100, 230, 200, 40, "Human vs AI");
     ui->btnSettings = createButton(WINDOW_WIDTH/2 - 100, 280, 200, 40, "Settings");
-    ui->btnEasy = createButton(WINDOW_WIDTH/2 - 200, 210, 90, 40, "Easy");
-    ui->btnMedium = createButton(WINDOW_WIDTH/2 - 100, 210, 90, 40, "Medium");
-    ui->btnHard = createButton(WINDOW_WIDTH/2, 210, 90, 40, "Hard");
-    ui->btnExpert = createButton(WINDOW_WIDTH/2 + 100, 210, 90, 40, "Expert");
+    ui->btnEasy = createButton(WINDOW_WIDTH/2 - 220, 210, 110, 40, "Easy");
+    ui->btnMedium = createButton(WINDOW_WIDTH/2 - 100, 210, 110, 40, "Medium");
+    ui->btnHard = createButton(WINDOW_WIDTH/2 + 20, 210, 110, 40, "Hard");
+    ui->btnExpert = createButton(WINDOW_WIDTH/2 + 140, 210, 110, 40, "Expert");
     ui->btnBack = createButton(WINDOW_WIDTH/2 - 60, 320, 120, 40, "Back");
 
     int bottomY = BOARD_OFFSET_Y + BOARD_SIZE_PX + 10;
-    ui->btnNewGame = createButton(BOARD_OFFSET_X, bottomY, 90, 30, "New");
-    ui->btnLoadGame = createButton(BOARD_OFFSET_X + 95, bottomY, 90, 30, "Load");
-    ui->btnSaveGame = createButton(BOARD_OFFSET_X + 190, bottomY, 90, 30, "Save");
-    ui->btnUndo = createButton(BOARD_OFFSET_X + 285, bottomY, 90, 30, "Undo");
-    ui->btnResign = createButton(BOARD_OFFSET_X + 380, bottomY, 90, 30, "Resign");
-    ui->btnMainMenu = createButton(BOARD_OFFSET_X + 475, bottomY, 90, 30, "Menu");
+    ui->btnNewGame = createButton(BOARD_OFFSET_X, bottomY, 100, 40, "New");
+    ui->btnLoadGame = createButton(BOARD_OFFSET_X + 105, bottomY, 100, 40, "Load");
+    ui->btnSaveGame = createButton(BOARD_OFFSET_X + 210, bottomY, 100, 40, "Save");
+    ui->btnUndo = createButton(BOARD_OFFSET_X + 315, bottomY, 100, 40, "Undo");
+    ui->btnResign = createButton(BOARD_OFFSET_X + 420, bottomY, 100, 40, "Resign");
+    ui->btnMainMenu = createButton(BOARD_OFFSET_X + 525, bottomY, 100, 40, "Menu");
     ui->btnFlipBoard = createButton(WINDOW_WIDTH - 140, 20, 120, 30, "Flip");
     ui->btnTheme = createButton(WINDOW_WIDTH - 140, 60, 120, 30, "Theme");
 

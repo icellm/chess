@@ -7,12 +7,12 @@
 #include "engine.h"
 
 // UI constants
-#define WINDOW_WIDTH 800
-#define WINDOW_HEIGHT 600
-#define BOARD_SIZE_PX 480
+#define WINDOW_WIDTH 1200
+#define WINDOW_HEIGHT 800
+#define BOARD_SIZE_PX 640
 #define SQUARE_SIZE (BOARD_SIZE_PX / 8)
-#define BOARD_OFFSET_X 160
-#define BOARD_OFFSET_Y 60
+#define BOARD_OFFSET_X 80
+#define BOARD_OFFSET_Y 80
 
 // UI colors
 #define THEME_CLASSIC_LIGHT 0xEED6B9FF
