@@ -5,6 +5,7 @@
 #include <SDL2/SDL_ttf.h>
 #include "chess.h"
 #include "ai.h"
+#include "settings.h"
 
 // UI constants
 #define WINDOW_WIDTH 800
@@ -67,6 +68,7 @@ typedef struct {
     AIDifficulty aiDifficulty;
     UITheme theme;
     bool flipBoard;
+    Settings *settings;
 
     Uint32 lightColor;
     Uint32 darkColor;
@@ -113,7 +115,7 @@ typedef struct {
 } UIContext;
 
 // UI initialization and cleanup
-UIContext* initUI(GameState *state, GameHistory *history);
+UIContext* initUI(GameState *state, GameHistory *history, Settings *settings);
 void cleanupUI(UIContext *ui);
 
 // UI main loop
