@@ -26,7 +26,8 @@ Key Functions
   • --load <file> to begin from a saved PGN file.
   • --pgn <file> to specify the save/load PGN filename used by the UI.
   • --flip to start with the board flipped for Black's perspective.
-  • --theme <alt> to use the alternate board color theme.
+  • --theme <alt> to use the alternate board color theme. Themes include
+    classic, alt, neon, and pastel.
 1
 2.2 chess.h and chess.c
 These files implement the core chess logic, including the board representation,
@@ -392,9 +393,10 @@ The game supports saving and loading game states using the PGN (Portable Game No
 • Saving: The saveGame() function (in chess.c) writes the current game to a PGN file. This
 includes standard PGN headers (Event, Site, Date, White, Black, Result) and the sequence of
 moves made in algebraic notation.
-• Loading: The loadGame() function (in chess.c) reads a PGN file. It resets the game state and
-then processes each move in the PGN file sequentially using makeMove() to reconstruct the game
-position.
+• Loading: The loadGame() function (in chess.c) reads a PGN file. It now strips
+  headers, comments, and move variations so that many PGN formats can be
+  loaded. After cleaning, each move token is replayed with makeMove() to
+  reconstruct the position.
 • The PGN format stored includes the move number, and moves in standard algebraic notation (e.g.,
 ”e2-e4”, ”g8-f6”). Promotions are also handled (e.g., ”e7-e8=Q”).
 An example of chess_save.pgn content:

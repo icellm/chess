@@ -1139,55 +1139,71 @@ bool loadGame(GameState *state, GameHistory *history, const char *filename) {
     if (!file) {
         return false;
     }
-    
+
     // Reset game state
     resetGame(state, history);
-    
-    char line[256];
-    bool inMoves = false;
-    
-    while (fgets(line, sizeof(line), file)) {
-        // Skip header lines
-        if (line[0] == '[') {
+
+    // Read entire file
+    fseek(file, 0, SEEK_END);
+    long size = ftell(file);
+    fseek(file, 0, SEEK_SET);
+    char *pgn = (char*)malloc(size + 1);
+    if (!pgn) {
+        fclose(file);
+        return false;
+    }
+    fread(pgn, 1, size, file);
+    pgn[size] = '\0';
+    fclose(file);
+
+    // Remove headers, comments, and variations
+    char *clean = (char*)malloc(size + 1);
+    if (!clean) {
+        free(pgn);
+        return false;
+    }
+
+    bool in_brace = false;
+    bool in_semi = false;
+    int paren = 0;
+    size_t j = 0;
+    for (size_t i = 0; pgn[i]; i++) {
+        char c = pgn[i];
+        if (in_brace) { if (c == '}') in_brace = false; continue; }
+        if (in_semi) { if (c == '\n' || c == '\r') in_semi = false; continue; }
+        if (c == '{') { in_brace = true; continue; }
+        if (c == ';') { in_semi = true; continue; }
+        if (c == '(') { paren++; continue; }
+        if (c == ')') { if (paren > 0) paren--; continue; }
+        if (paren > 0) continue;
+        if (c == '[') { while (pgn[i] && pgn[i] != ']') i++; continue; }
+        clean[j++] = c;
+    }
+    clean[j] = '\0';
+
+    // Tokenize
+    char *token = strtok(clean, " \t\r\n");
+    while (token) {
+        if (strchr(token, '.')) { token = strtok(NULL, " \t\r\n"); continue; }
+        if (!strcmp(token, "1-0") || !strcmp(token, "0-1") ||
+            !strcmp(token, "1/2-1/2") || !strcmp(token, "*")) {
+            token = strtok(NULL, " \t\r\n");
             continue;
         }
-        
-        // Parse move lines
-        if (!inMoves && line[0] != '\n') {
-            inMoves = true;
+
+        Move move;
+        algebraicToMove(token, &move);
+        if (!makeMove(state, move, history)) {
+            free(pgn);
+            free(clean);
+            return false;
         }
-        
-        if (inMoves) {
-            char *token = strtok(line, " \t\n");
-            while (token) {
-                // Skip move numbers
-                if (strchr(token, '.')) {
-                    token = strtok(NULL, " \t\n");
-                    continue;
-                }
-                
-                // Skip result markers
-                if (strcmp(token, "1-0") == 0 || strcmp(token, "0-1") == 0 || 
-                    strcmp(token, "1/2-1/2") == 0 || strcmp(token, "*") == 0) {
-                    token = strtok(NULL, " \t\n");
-                    continue;
-                }
-                
-                // Process move
-                Move move;
-                algebraicToMove(token, &move);
-                
-                if (!makeMove(state, move, history)) {
-                    fclose(file);
-                    return false;
-                }
-                
-                token = strtok(NULL, " \t\n");
-            }
-        }
+
+        token = strtok(NULL, " \t\r\n");
     }
-    
-    fclose(file);
+
+    free(pgn);
+    free(clean);
     return true;
 }
 

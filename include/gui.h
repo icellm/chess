@@ -21,14 +21,16 @@
 #define THEME_ALT_DARK      0x2F3E46FF
 #define THEME_NEON_LIGHT    0x39FF14FF
 #define THEME_NEON_DARK     0x091833FF
+#define THEME_PASTEL_LIGHT  0xFFE1E1FF
+#define THEME_PASTEL_DARK   0xA0C4FFFF
 
 #define COLOR_SELECTED 0xF7F76BFF // Selected square
 #define COLOR_MOVE 0x706396FF   // Possible move
 #define COLOR_LAST_MOVE 0x6BA8F7FF // Highlight for last move
-#define COLOR_BACKGROUND 0x282C34FF // Default background
-#define COLOR_TEXT 0xABB2BFFF   // Text color
-#define COLOR_BUTTON 0x5C6370FF // Button color
-#define COLOR_BUTTON_HOVER 0x767D89FF // Button hover color
+#define COLOR_BACKGROUND 0xF1F1F1FF // Default background
+#define COLOR_TEXT 0x333333FF   // Text color
+#define COLOR_BUTTON 0xF4A7B9FF // Button color
+#define COLOR_BUTTON_HOVER 0xF8CDEBFF // Button hover color
 
 // Game modes
 typedef enum {
@@ -39,7 +41,8 @@ typedef enum {
 typedef enum {
     THEME_CLASSIC,
     THEME_ALT,
-    THEME_NEON
+    THEME_NEON,
+    THEME_PASTEL
 } UITheme;
 
 // UI states

@@ -144,23 +144,24 @@ UIContext* initUI(GameState *state, GameHistory *history) {
     loadPieceTextures(ui);
     
     // Create buttons
-    ui->btnHumanVsHuman = createButton(WINDOW_WIDTH/2 - 100, 200, 200, 40, "Human vs Human");
-    ui->btnHumanVsAI = createButton(WINDOW_WIDTH/2 - 100, 250, 200, 40, "Human vs AI");
-    ui->btnSettings = createButton(WINDOW_WIDTH/2 - 100, 300, 200, 40, "Settings");
-    ui->btnEasy = createButton(WINDOW_WIDTH/2 - 200, 220, 90, 40, "Easy");
-    ui->btnMedium = createButton(WINDOW_WIDTH/2 - 100, 220, 90, 40, "Medium");
-    ui->btnHard = createButton(WINDOW_WIDTH/2, 220, 90, 40, "Hard");
-    ui->btnExpert = createButton(WINDOW_WIDTH/2 + 100, 220, 90, 40, "Expert");
-    ui->btnBack = createButton(WINDOW_WIDTH/2 - 60, 300, 120, 40, "Back");
-    
-    ui->btnNewGame = createButton(20, 20, 120, 30, "New Game");
-    ui->btnLoadGame = createButton(20, 60, 120, 30, "Load Game");
-    ui->btnSaveGame = createButton(20, 100, 120, 30, "Save Game");
-    ui->btnUndo = createButton(20, 140, 120, 30, "Undo Move");
-    ui->btnResign = createButton(20, 180, 120, 30, "Resign");
-    ui->btnMainMenu = createButton(20, 220, 120, 30, "Main Menu");
-    ui->btnFlipBoard = createButton(20, 260, 120, 30, "Flip Board");
-    ui->btnTheme = createButton(20, 300, 120, 30, "Change Theme");
+    ui->btnHumanVsHuman = createButton(WINDOW_WIDTH/2 - 100, 180, 200, 40, "Human vs Human");
+    ui->btnHumanVsAI = createButton(WINDOW_WIDTH/2 - 100, 230, 200, 40, "Human vs AI");
+    ui->btnSettings = createButton(WINDOW_WIDTH/2 - 100, 280, 200, 40, "Settings");
+    ui->btnEasy = createButton(WINDOW_WIDTH/2 - 200, 210, 90, 40, "Easy");
+    ui->btnMedium = createButton(WINDOW_WIDTH/2 - 100, 210, 90, 40, "Medium");
+    ui->btnHard = createButton(WINDOW_WIDTH/2, 210, 90, 40, "Hard");
+    ui->btnExpert = createButton(WINDOW_WIDTH/2 + 100, 210, 90, 40, "Expert");
+    ui->btnBack = createButton(WINDOW_WIDTH/2 - 60, 320, 120, 40, "Back");
+
+    int bottomY = BOARD_OFFSET_Y + BOARD_SIZE_PX + 10;
+    ui->btnNewGame = createButton(BOARD_OFFSET_X, bottomY, 90, 30, "New");
+    ui->btnLoadGame = createButton(BOARD_OFFSET_X + 95, bottomY, 90, 30, "Load");
+    ui->btnSaveGame = createButton(BOARD_OFFSET_X + 190, bottomY, 90, 30, "Save");
+    ui->btnUndo = createButton(BOARD_OFFSET_X + 285, bottomY, 90, 30, "Undo");
+    ui->btnResign = createButton(BOARD_OFFSET_X + 380, bottomY, 90, 30, "Resign");
+    ui->btnMainMenu = createButton(BOARD_OFFSET_X + 475, bottomY, 90, 30, "Menu");
+    ui->btnFlipBoard = createButton(WINDOW_WIDTH - 140, 20, 120, 30, "Flip");
+    ui->btnTheme = createButton(WINDOW_WIDTH - 140, 60, 120, 30, "Theme");
 
     applyTheme(ui);
 
@@ -524,7 +525,7 @@ void handleEvent(UIContext *ui, SDL_Event *event) {
                     ui->aiDifficulty = AI_EXPERT;
                 }
                 else if (isPointInRect(mouseX, mouseY, &ui->btnTheme.rect)) {
-                    ui->theme = (ui->theme + 1) % 3;
+                    ui->theme = (ui->theme + 1) % 4;
                     applyTheme(ui);
                 }
                 else if (isPointInRect(mouseX, mouseY, &ui->btnBack.rect)) {
@@ -580,7 +581,7 @@ void handleEvent(UIContext *ui, SDL_Event *event) {
                     ui->flipBoard = !ui->flipBoard;
                 }
                 else if (isPointInRect(mouseX, mouseY, &ui->btnTheme.rect)) {
-                    ui->theme = (ui->theme + 1) % 3;
+                    ui->theme = (ui->theme + 1) % 4;
                     applyTheme(ui);
                 }
                 
@@ -1249,7 +1250,8 @@ void renderCapturedPieces(UIContext *ui) {
     
     // Display captured pieces (simplified representation)
     // For white pieces captured by black
-    int offsetY = 320;
+    int baseX = BOARD_OFFSET_X + BOARD_SIZE_PX + 20;
+    int offsetY = BOARD_OFFSET_Y;
     if (ui->font) {
         SDL_Color textColor = {200, 200, 200, 255};
         SDL_Surface *labelSurface = TTF_RenderText_Blended(ui->font, "Captured White:", textColor);
@@ -1259,7 +1261,7 @@ void renderCapturedPieces(UIContext *ui) {
             
             if (labelTexture) {
                 SDL_Rect labelRect = {
-                    20,
+                    baseX,
                     offsetY,
                     labelSurface->w,
                     labelSurface->h
@@ -1293,7 +1295,7 @@ void renderCapturedPieces(UIContext *ui) {
             
             if (pieceTexture) {
                 SDL_Rect pieceRect = {
-                    20,
+                    baseX,
                     offsetY + 25,
                     pieceSurface->w,
                     pieceSurface->h
@@ -1308,7 +1310,7 @@ void renderCapturedPieces(UIContext *ui) {
     }
     
     // For black pieces captured by white
-    offsetY = 380;
+    offsetY = BOARD_OFFSET_Y + 60;
     if (ui->font) {
         SDL_Color textColor = {200, 200, 200, 255};
         SDL_Surface *labelSurface = TTF_RenderText_Blended(ui->font, "Captured Black:", textColor);
@@ -1318,7 +1320,7 @@ void renderCapturedPieces(UIContext *ui) {
             
             if (labelTexture) {
                 SDL_Rect labelRect = {
-                    20,
+                    baseX,
                     offsetY,
                     labelSurface->w,
                     labelSurface->h
@@ -1350,7 +1352,7 @@ void renderCapturedPieces(UIContext *ui) {
             
             if (pieceTexture) {
                 SDL_Rect pieceRect = {
-                    20,
+                    baseX,
                     offsetY + 25,
                     pieceSurface->w,
                     pieceSurface->h
@@ -1425,6 +1427,11 @@ void applyTheme(UIContext *ui) {
         ui->lightColor = THEME_NEON_LIGHT;
         ui->darkColor = THEME_NEON_DARK;
         ui->backgroundColor = 0x000000FF;
+        break;
+    case THEME_PASTEL:
+        ui->lightColor = THEME_PASTEL_LIGHT;
+        ui->darkColor = THEME_PASTEL_DARK;
+        ui->backgroundColor = COLOR_BACKGROUND;
         break;
     case THEME_CLASSIC:
     default:
