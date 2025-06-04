@@ -11,7 +11,7 @@
 #include "engine.h"
 
 // Piece textures
-SDL_Texture *pieceTextures[2][7]; // [color][piece type]
+SDL_Texture *piece_textures[2][7]; // [color][piece type]
 
 static inline int rowToY(UIContext *ui, int row) {
     return ui->flipBoard ? BOARD_OFFSET_Y + row * SQUARE_SIZE
@@ -181,12 +181,12 @@ void cleanupUI(UIContext *ui) {
 // Load piece textures from files or create them procedurally
 void loadPieceTextures(UIContext *ui) {
     // Free existing textures first if any
-    // This call might be problematic if pieceTextures is global and not tied to a specific ui instance yet.
+    // This call might be problematic if piece_textures is global and not tied to a specific ui instance yet.
     // However, to match the signature:
     freePieceTextures();
 
     // Initialize texture array
-    memset(pieceTextures, 0, sizeof(pieceTextures));
+    memset(piece_textures, 0, sizeof(piece_textures));
     
     // Try to load textures from files
     const char *pieceNames[] = {"", "pawn", "knight", "bishop", "rook", "queen", "king"};
@@ -201,10 +201,10 @@ void loadPieceTextures(UIContext *ui) {
             SDL_Surface *surface = IMG_Load(imagePath);
             
             if (surface) {
-                pieceTextures[color][piece] = SDL_CreateTextureFromSurface(ui->renderer, surface);
+                piece_textures[color][piece] = SDL_CreateTextureFromSurface(ui->renderer, surface);
                 SDL_FreeSurface(surface);
                 
-                if (!pieceTextures[color][piece]) {
+                if (!piece_textures[color][piece]) {
                     texturesLoaded = false;
                     break;
                 }
@@ -258,7 +258,7 @@ void loadPieceTextures(UIContext *ui) {
                     }
                 }
                 
-                pieceTextures[color][piece] = SDL_CreateTextureFromSurface(ui->renderer, surface);
+                piece_textures[color][piece] = SDL_CreateTextureFromSurface(ui->renderer, surface);
                 SDL_FreeSurface(surface);
             }
         }
@@ -269,9 +269,9 @@ void loadPieceTextures(UIContext *ui) {
 void freePieceTextures(void) {
     for (int color = 0; color < 2; color++) {
         for (int piece = 1; piece <= 6; piece++) {
-            if (pieceTextures[color][piece]) {
-                SDL_DestroyTexture(pieceTextures[color][piece]);
-                pieceTextures[color][piece] = NULL;
+            if (piece_textures[color][piece]) {
+                SDL_DestroyTexture(piece_textures[color][piece]);
+                piece_textures[color][piece] = NULL;
             }
         }
     }
@@ -286,7 +286,7 @@ void renderPieceAt(UIContext *ui, Piece piece, int x, int y) {
     
     if (pieceType < 1 || pieceType > 6) return;
     
-    SDL_Texture *texture = pieceTextures[color][pieceType];
+    SDL_Texture *texture = piece_textures[color][pieceType];
     if (!texture) return;
     
     SDL_Rect dstRect = {x, y, SQUARE_SIZE, SQUARE_SIZE};

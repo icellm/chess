@@ -344,32 +344,32 @@ int materialScore(const GameState *state) {
 }
 
 // Evaluate piece mobility
-int mobilityScore(const GameState *state) {
+int mobilityScore(const GameState *game_state) {
     const int MOBILITY_WEIGHT = 10;
-    
+
     // Count legal moves for each side
-    int whiteMoves = 0;
-    int blackMoves = 0;
-    
+    int white_moves = 0;
+    int black_moves = 0;
+
     // Create a temporary state
-    GameState tempState = *state;
-    
+    GameState temp_state = *game_state;
+
     // Count white moves
-    tempState.turn = WHITE;
-    MoveList whiteMoveList;
-    generateMoves(&tempState, &whiteMoveList);
-    whiteMoves = whiteMoveList.count;
-    
+    temp_state.turn = WHITE;
+    MoveList white_move_list;
+    generateMoves(&temp_state, &white_move_list);
+    white_moves = white_move_list.count;
+
     // Count black moves
-    tempState.turn = BLACK;
-    MoveList blackMoveList;
-    generateMoves(&tempState, &blackMoveList);
-    blackMoves = blackMoveList.count;
-    
+    temp_state.turn = BLACK;
+    MoveList black_move_list;
+    generateMoves(&temp_state, &black_move_list);
+    black_moves = black_move_list.count;
+
     // Calculate mobility score
-    int mobilityScore = (whiteMoves - blackMoves) * MOBILITY_WEIGHT;
-    
-    return mobilityScore;
+    int mobility_score = (white_moves - black_moves) * MOBILITY_WEIGHT;
+
+    return mobility_score;
 }
 
 // Evaluate pawn structure

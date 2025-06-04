@@ -328,7 +328,7 @@ Declares functions for:
 5.2 ui.c
 Implements the UI functionality using SDL2, SDL ttf, and SDL image.
 5.2.1 Global Variables
-• SDL Texture *pieceTextures[2][7]: Array to store textures for each piece type and color.
+• SDL Texture *piece_textures[2][7]: Array to store textures for each piece type and color.
 5
 5.2.2 Key Functions
 • initUI(): Initializes SDL, SDL ttf, and SDL image. Creates the main window and renderer.

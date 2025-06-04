@@ -211,7 +211,7 @@ bool isValidMove(const GameState *state, Move move) {
     int pieceType = GET_PIECE_TYPE(piece);
     
     // Validate move based on piece type
-    bool validPieceMove = false;
+    bool valid_piece_move = false;
     
     switch (pieceType) {
         case PAWN: {
@@ -221,31 +221,31 @@ bool isValidMove(const GameState *state, Move move) {
             // Forward move
             if (fromCol == toCol && targetPiece == EMPTY) {
                 if (toRow == fromRow + direction) {
-                    validPieceMove = true;
+                    valid_piece_move = true;
                 }
                 // Double move from starting position
                 else if (fromRow == startRow && toRow == fromRow + 2 * direction && 
                          getPiece(state, fromRow + direction, fromCol) == EMPTY) {
-                    validPieceMove = true;
+                    valid_piece_move = true;
                 }
             }
             // Capture move (diagonal)
             else if (toRow == fromRow + direction && abs(toCol - fromCol) == 1) {
                 // Normal capture
                 if (targetPiece != EMPTY) {
-                    validPieceMove = true;
+                    valid_piece_move = true;
                 }
                 // En passant capture
                 else if (state->enPassantCol == toCol) {
                     int epPawnRow = (state->turn == WHITE) ? 4 : 3;
                     if (fromRow == epPawnRow) {
-                        validPieceMove = true;
+                        valid_piece_move = true;
                     }
                 }
             }
             
             // Check for valid promotion piece if it's a promotion move
-            if (validPieceMove && ((state->turn == WHITE && toRow == 7) || (state->turn == BLACK && toRow == 0))) {
+            if (valid_piece_move && ((state->turn == WHITE && toRow == 7) || (state->turn == BLACK && toRow == 0))) {
                 int promotionPiece = move.promotionPiece;
                 if (promotionPiece < KNIGHT || promotionPiece > QUEEN) {
                     return false;
@@ -255,27 +255,27 @@ bool isValidMove(const GameState *state, Move move) {
         }
         
         case KNIGHT: {
-            int rowDiff = abs(toRow - fromRow);
-            int colDiff = abs(toCol - fromCol);
+            int row_diff = abs(toRow - fromRow);
+            int col_diff = abs(toCol - fromCol);
             
-            validPieceMove = (rowDiff == 1 && colDiff == 2) || (rowDiff == 2 && colDiff == 1);
+            valid_piece_move = (row_diff == 1 && col_diff == 2) || (row_diff == 2 && col_diff == 1);
             break;
         }
         
         case BISHOP: {
-            int rowDiff = abs(toRow - fromRow);
-            int colDiff = abs(toCol - fromCol);
+            int row_diff = abs(toRow - fromRow);
+            int col_diff = abs(toCol - fromCol);
             
-            if (rowDiff == colDiff) {
-                validPieceMove = true;
+            if (row_diff == col_diff) {
+                valid_piece_move = true;
                 
                 // Check for pieces in the path
-                int rowStep = (toRow > fromRow) ? 1 : -1;
-                int colStep = (toCol > fromCol) ? 1 : -1;
+                int row_step = (toRow > fromRow) ? 1 : -1;
+                int col_step = (toCol > fromCol) ? 1 : -1;
                 
-                for (int i = 1; i < rowDiff; i++) {
-                    if (getPiece(state, fromRow + i * rowStep, fromCol + i * colStep) != EMPTY) {
-                        validPieceMove = false;
+                for (int i = 1; i < row_diff; i++) {
+                    if (getPiece(state, fromRow + i * row_step, fromCol + i * col_step) != EMPTY) {
+                        valid_piece_move = false;
                         break;
                     }
                 }
@@ -285,14 +285,14 @@ bool isValidMove(const GameState *state, Move move) {
         
         case ROOK: {
             if (fromRow == toRow || fromCol == toCol) {
-                validPieceMove = true;
+                valid_piece_move = true;
                 
                 // Check for pieces in the path
                 if (fromRow == toRow) {
                     int step = (toCol > fromCol) ? 1 : -1;
                     for (int col = fromCol + step; col != toCol; col += step) {
                         if (getPiece(state, fromRow, col) != EMPTY) {
-                            validPieceMove = false;
+                            valid_piece_move = false;
                             break;
                         }
                     }
@@ -300,7 +300,7 @@ bool isValidMove(const GameState *state, Move move) {
                     int step = (toRow > fromRow) ? 1 : -1;
                     for (int row = fromRow + step; row != toRow; row += step) {
                         if (getPiece(state, row, fromCol) != EMPTY) {
-                            validPieceMove = false;
+                            valid_piece_move = false;
                             break;
                         }
                     }
@@ -310,18 +310,18 @@ bool isValidMove(const GameState *state, Move move) {
         }
         
         case QUEEN: {
-            int rowDiff = abs(toRow - fromRow);
-            int colDiff = abs(toCol - fromCol);
+            int row_diff = abs(toRow - fromRow);
+            int col_diff = abs(toCol - fromCol);
             
-            if ((fromRow == toRow || fromCol == toCol) || (rowDiff == colDiff)) {
-                validPieceMove = true;
+            if ((fromRow == toRow || fromCol == toCol) || (row_diff == col_diff)) {
+                valid_piece_move = true;
                 
                 // Check for pieces in the path
                 if (fromRow == toRow) {
                     int step = (toCol > fromCol) ? 1 : -1;
                     for (int col = fromCol + step; col != toCol; col += step) {
                         if (getPiece(state, fromRow, col) != EMPTY) {
-                            validPieceMove = false;
+                            valid_piece_move = false;
                             break;
                         }
                     }
@@ -329,17 +329,17 @@ bool isValidMove(const GameState *state, Move move) {
                     int step = (toRow > fromRow) ? 1 : -1;
                     for (int row = fromRow + step; row != toRow; row += step) {
                         if (getPiece(state, row, fromCol) != EMPTY) {
-                            validPieceMove = false;
+                            valid_piece_move = false;
                             break;
                         }
                     }
                 } else { // Diagonal
-                    int rowStep = (toRow > fromRow) ? 1 : -1;
-                    int colStep = (toCol > fromCol) ? 1 : -1;
+                    int row_step = (toRow > fromRow) ? 1 : -1;
+                    int col_step = (toCol > fromCol) ? 1 : -1;
                     
-                    for (int i = 1; i < rowDiff; i++) {
-                        if (getPiece(state, fromRow + i * rowStep, fromCol + i * colStep) != EMPTY) {
-                            validPieceMove = false;
+                    for (int i = 1; i < row_diff; i++) {
+                        if (getPiece(state, fromRow + i * row_step, fromCol + i * col_step) != EMPTY) {
+                            valid_piece_move = false;
                             break;
                         }
                     }
@@ -349,15 +349,15 @@ bool isValidMove(const GameState *state, Move move) {
         }
         
         case KING: {
-            int rowDiff = abs(toRow - fromRow);
-            int colDiff = abs(toCol - fromCol);
+            int row_diff = abs(toRow - fromRow);
+            int col_diff = abs(toCol - fromCol);
             
             // Normal king move
-            if (rowDiff <= 1 && colDiff <= 1) {
-                validPieceMove = true;
+            if (row_diff <= 1 && col_diff <= 1) {
+                valid_piece_move = true;
             }
             // Castling
-            else if (rowDiff == 0 && colDiff == 2 && !isInCheck(state, state->turn)) {
+            else if (row_diff == 0 && col_diff == 2 && !isInCheck(state, state->turn)) {
                 int row = (state->turn == WHITE) ? 0 : 7;
                 
                 // Kingside castling
@@ -367,7 +367,7 @@ bool isValidMove(const GameState *state, Move move) {
                         getPiece(state, row, 5) == EMPTY && 
                         getPiece(state, row, 6) == EMPTY &&
                         !isSquareAttacked(state, row, 5, !state->turn)) {
-                        validPieceMove = true;
+                        valid_piece_move = true;
                     }
                 }
                 // Queenside castling
@@ -378,7 +378,7 @@ bool isValidMove(const GameState *state, Move move) {
                         getPiece(state, row, 2) == EMPTY && 
                         getPiece(state, row, 3) == EMPTY &&
                         !isSquareAttacked(state, row, 3, !state->turn)) {
-                        validPieceMove = true;
+                        valid_piece_move = true;
                     }
                 }
             }
@@ -386,7 +386,7 @@ bool isValidMove(const GameState *state, Move move) {
         }
     }
     
-    if (!validPieceMove) {
+    if (!valid_piece_move) {
         return false;
     }
     
