@@ -18,7 +18,7 @@ if command -v apt-get >/dev/null; then
 elif command -v dnf >/dev/null; then
   PM="dnf"
   INSTALL="$SUDO dnf install -y"
-  UPDATE="$SUDO dnf install -y \"pkgconfig\""
+  UPDATE="$SUDO dnf makecache"
   PACKAGES="gcc make SDL2-devel SDL2_image-devel SDL2_ttf-devel"
 elif command -v pacman >/dev/null; then
   PM="pacman"

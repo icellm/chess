@@ -91,6 +91,14 @@ typedef struct {
     int animFrame;
     Move animMove;
 
+    // Promotion state
+    bool promoting;
+    Move pendingMove;
+    Button btnPromoteQ;
+    Button btnPromoteR;
+    Button btnPromoteB;
+    Button btnPromoteN;
+
     // Drag state
     bool dragging;
     int dragX;
@@ -149,6 +157,7 @@ void renderButtons(UIContext *ui);
 void renderMessage(UIContext *ui);
 void renderCapturedPieces(UIContext *ui);
 void renderMoveHistory(UIContext *ui);
+void renderPromotion(UIContext *ui);
 void applyTheme(UIContext *ui);
 
 // Game logic

@@ -1,0 +1,81 @@
+\documentclass{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{listings}
+\usepackage{hyperref}
+\title{Chess Game Project Documentation}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{Overview}
+This project implements a graphical chess game in C using SDL2. It
+includes a minimax based AI, drag--and--drop movement, multiple color
+themes and PGN save/load support. The helper script
+\texttt{run\_game.sh} installs required packages, builds the project and
+launches it.
+
+\section{File Structure}
+\begin{description}
+  \item[include/] Header files for the board logic, engine and GUI.
+  \item[src/] C sources implementing those components and the main entry
+  point.
+  \item[Makefile] Build rules using \texttt{gcc} and \texttt{sdl2-config}.
+  \item[run\_game.sh] Script that installs SDL2 libraries with the
+  available package manager, compiles the program and runs it.
+  \item[docs.txt] The original plain text manual.
+  \item[docs.tex] This LaTeX documentation.
+\end{description}
+
+\section{Building and Running}
+\subsection{Using Make}
+From the project directory execute:
+\begin{lstlisting}[language=bash]
+make clean && make
+./chess_game
+\end{lstlisting}
+
+\subsection{Using \texttt{run\_game.sh}}
+The script detects \texttt{apt}, \texttt{dnf} or \texttt{pacman} and
+installs SDL2 libraries automatically:
+\begin{lstlisting}[language=bash]
+bash run_game.sh
+\end{lstlisting}
+If you encounter ``permission denied'' make it executable first:
+\begin{lstlisting}[language=bash]
+chmod +x run_game.sh
+\end{lstlisting}
+
+\section{Game Logic}
+The chess rules are implemented in \texttt{board.c}. The\newline
+\texttt{GameState} structure stores piece placement, castling rights,
+turn, half--move clock and full move number. Move generation validates
+legal moves and detects check, mate or draw. The move history allows
+undo/redo and PGN saving.
+
+\section{AI Engine}
+\texttt{engine.c} provides a minimax search with alpha--beta pruning.
+Evaluation uses piece--square tables and basic heuristics such as
+material, mobility and king safety. Difficulty levels adjust the search
+depth.
+
+\section{Graphical Interface}
+The SDL based interface lives in \texttt{gui.c}. Features include:
+\begin{itemize}
+  \item A \(1200\times800\) window with a \(640\,\mathrm{px}\) board.
+  \item Multiple themes: classic, alt, neon and pastel.
+  \item Drag--and--drop piece movement.
+  \item Settings menu to choose AI difficulty and theme.
+  \item Captured piece display and move history.
+  \item Pawn promotion dialog allowing choice of Queen, Rook, Bishop or Knight.
+\end{itemize}
+
+\section{Saving and Loading}
+Games can be saved and loaded from PGN format. The loader strips headers,
+comments and variations so a wide range of PGN files can be replayed.
+
+\section{Extending}
+Possible future improvements include stronger AI heuristics, networked
+multiplayer and additional visual themes.
+
+\end{document}

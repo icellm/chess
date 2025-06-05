@@ -13,6 +13,8 @@
 // Piece textures
 SDL_Texture *piece_textures[2][7]; // [color][piece type]
 
+static void finalizePromotion(UIContext *ui, int pieceType);
+
 static inline int rowToY(UIContext *ui, int row) {
     return ui->flipBoard ? BOARD_OFFSET_Y + row * SQUARE_SIZE
                           : BOARD_OFFSET_Y + (7 - row) * SQUARE_SIZE;
@@ -61,6 +63,7 @@ UIContext* initUI(GameState *state, GameHistory *history) {
     ui->dragOffsetX = 0;
     ui->dragOffsetY = 0;
     ui->animating = false;
+    ui->promoting = false;
     ui->hasLastMove = false;
     strcpy(ui->saveFile, "chess_save.pgn");
     
@@ -162,6 +165,11 @@ UIContext* initUI(GameState *state, GameHistory *history) {
     ui->btnMainMenu = createButton(BOARD_OFFSET_X + 525, bottomY, 100, 40, "Menu");
     ui->btnFlipBoard = createButton(WINDOW_WIDTH - 140, 20, 120, 30, "Flip");
     ui->btnTheme = createButton(WINDOW_WIDTH - 140, 60, 120, 30, "Theme");
+    int promoY = WINDOW_HEIGHT/2 - 20;
+    ui->btnPromoteQ = createButton(WINDOW_WIDTH/2 - 120, promoY, 60, 40, "Q");
+    ui->btnPromoteR = createButton(WINDOW_WIDTH/2 - 60, promoY, 60, 40, "R");
+    ui->btnPromoteB = createButton(WINDOW_WIDTH/2, promoY, 60, 40, "B");
+    ui->btnPromoteN = createButton(WINDOW_WIDTH/2 + 60, promoY, 60, 40, "N");
 
     applyTheme(ui);
 
@@ -453,6 +461,14 @@ void handleEvent(UIContext *ui, SDL_Event *event) {
             mouseX = event->motion.x;
             mouseY = event->motion.y;
 
+            if (ui->promoting) {
+                ui->btnPromoteQ.hover = isPointInRect(mouseX, mouseY, &ui->btnPromoteQ.rect);
+                ui->btnPromoteR.hover = isPointInRect(mouseX, mouseY, &ui->btnPromoteR.rect);
+                ui->btnPromoteB.hover = isPointInRect(mouseX, mouseY, &ui->btnPromoteB.rect);
+                ui->btnPromoteN.hover = isPointInRect(mouseX, mouseY, &ui->btnPromoteN.rect);
+                break;
+            }
+
             if (ui->dragging) {
                 ui->dragX = mouseX;
                 ui->dragY = mouseY;
@@ -487,6 +503,19 @@ void handleEvent(UIContext *ui, SDL_Event *event) {
 
             mouseX = event->button.x;
             mouseY = event->button.y;
+
+            if (ui->promoting) {
+                if (isPointInRect(mouseX, mouseY, &ui->btnPromoteQ.rect)) {
+                    finalizePromotion(ui, QUEEN);
+                } else if (isPointInRect(mouseX, mouseY, &ui->btnPromoteR.rect)) {
+                    finalizePromotion(ui, ROOK);
+                } else if (isPointInRect(mouseX, mouseY, &ui->btnPromoteB.rect)) {
+                    finalizePromotion(ui, BISHOP);
+                } else if (isPointInRect(mouseX, mouseY, &ui->btnPromoteN.rect)) {
+                    finalizePromotion(ui, KNIGHT);
+                }
+                break;
+            }
 
             if (ui->state == STATE_MENU) {
                 // Menu button handling
@@ -618,6 +647,8 @@ void handleEvent(UIContext *ui, SDL_Event *event) {
             mouseX = event->button.x;
             mouseY = event->button.y;
 
+            if (ui->promoting) break;
+
             if (ui->dragging) {
                 ui->dragging = false;
                 if (ui->state == STATE_PLAYING &&
@@ -689,6 +720,21 @@ void resetSelection(UIContext *ui) {
     ui->possibleMoves.count = 0;
 }
 
+static void finalizePromotion(UIContext *ui, int pieceType) {
+    ui->promoting = false;
+    ui->pendingMove.promotionPiece = pieceType;
+
+    ui->animating = true;
+    ui->animFrame = 0;
+    ui->animMove = ui->pendingMove;
+
+    makeMove(ui->gameState, ui->pendingMove, ui->gameHistory);
+    ui->lastMove = ui->pendingMove;
+    ui->hasLastMove = true;
+
+    resetSelection(ui);
+}
+
 // Attempt to make a player move
 void makePlayerMove(UIContext *ui, int toRow, int toCol) {
     // Check if it's a valid move for the selected piece
@@ -712,13 +758,11 @@ void makePlayerMove(UIContext *ui, int toRow, int toCol) {
     if (validMove) {
         // Handle pawn promotion
         if (GET_PIECE_TYPE(getPiece(ui->gameState, ui->selectedRow, ui->selectedCol)) == PAWN &&
-            ((ui->gameState->turn == WHITE && toRow == 7) || 
+            ((ui->gameState->turn == WHITE && toRow == 7) ||
              (ui->gameState->turn == BLACK && toRow == 0))) {
-            
-            // Default to queen
-            move.promotionPiece = QUEEN;
-            
-            // TODO: Add promotion piece selection dialog
+            ui->pendingMove = move;
+            ui->promoting = true;
+            return;
         }
         
         // Start move animation
@@ -778,8 +822,10 @@ void renderUI(UIContext *ui) {
         renderButtons(ui);
         renderMoveHistory(ui);
         renderCapturedPieces(ui);
-        
-        if (ui->state == STATE_GAME_OVER) {
+
+        if (ui->promoting) {
+            renderPromotion(ui);
+        } else if (ui->state == STATE_GAME_OVER) {
             renderGameOverScreen(ui);
         }
     }
@@ -1098,6 +1144,18 @@ void renderGameOverScreen(UIContext *ui) {
             SDL_FreeSurface(textSurface);
         }
     }
+}
+
+// Render pawn promotion dialog
+void renderPromotion(UIContext *ui) {
+    SDL_SetRenderDrawColor(ui->renderer, 0, 0, 0, 160);
+    SDL_Rect overlay = {BOARD_OFFSET_X, BOARD_OFFSET_Y, BOARD_SIZE_PX, BOARD_SIZE_PX};
+    SDL_RenderFillRect(ui->renderer, &overlay);
+
+    drawButton(ui, &ui->btnPromoteQ);
+    drawButton(ui, &ui->btnPromoteR);
+    drawButton(ui, &ui->btnPromoteB);
+    drawButton(ui, &ui->btnPromoteN);
 }
 
 // Render UI buttons

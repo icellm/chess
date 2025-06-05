@@ -353,8 +353,10 @@ ESC for menu).
 • selectSquare(): Logic for when a player clicks on a square on the board. Manages piece selection,
 deselection, and generating possible moves for the selected piece.
 • makePlayerMove(): Attempts to make a move chosen by the human player. Validates the move
-against the generated possibleMoves. Handles pawn promotion (currently defaults to Queen,
-TODO for selection). Initiates move animation.
+against the generated possibleMoves. When a pawn reaches the last rank a
+promotion dialog appears letting the player choose between Queen, Rook,
+Bishop or Knight. The selected piece is then used for the promotion
+move and the animation begins.
 • makeAIMove(): Called when it’s the AI’s turn. Gets the best move from getBestMove() and
 initiates its animation and execution.
 • Rendering functions (renderUI(), renderBoard(), renderPieces(), etc.): These functions are
