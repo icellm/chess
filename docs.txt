@@ -108,8 +108,10 @@ GUI Features
 – Buttons for starting a new game, saving/loading, undoing moves,
 and resigning.
 – A dedicated Settings menu accessible from the main menu.
-• Captured Pieces:
-– Displays captured pieces and material advantage.
+• Captured Pieces and Stats:
+– Shows captured pieces along with the material score for each side.
+– Displays "White <points>  Black <points>" and the overall advantage.
+– The stats panel appears to the right of the board beneath the move history.
 • Game Over Screen:
 – Displays a semi-transparent overlay with the game result.
 4

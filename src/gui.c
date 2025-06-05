@@ -1276,40 +1276,49 @@ void renderCapturedPieces(UIContext *ui) {
     }
     
     int advantage = whiteMaterial - blackMaterial;
-    
-    // Render material advantage
-    if (ui->font && advantage != 0) {
-        char advantageText[32];
-        sprintf(advantageText, "Advantage: %s%d", 
-               advantage > 0 ? "+" : "",
-               advantage);
-        
+
+    // Stats panel position
+    int baseX = BOARD_OFFSET_X + BOARD_SIZE_PX + 20;
+    int offsetY = BOARD_OFFSET_Y + 180; // below move history
+
+    // Render material points for both sides
+    if (ui->font) {
+        char pointsText[64];
+        sprintf(pointsText, "White %d  Black %d", whiteMaterial, blackMaterial);
         SDL_Color textColor = {255, 255, 255, 255};
-        SDL_Surface *textSurface = TTF_RenderText_Blended(ui->font, advantageText, textColor);
-        
+        SDL_Surface *textSurface = TTF_RenderText_Blended(ui->font, pointsText, textColor);
         if (textSurface) {
             SDL_Texture *textTexture = SDL_CreateTextureFromSurface(ui->renderer, textSurface);
-            
             if (textTexture) {
-                SDL_Rect textRect = {
-                    20,
-                    270,
-                    textSurface->w,
-                    textSurface->h
-                };
-                
-                SDL_RenderCopy(ui->renderer, textTexture, NULL, &textRect);
+                SDL_Rect rect = { baseX, offsetY, textSurface->w, textSurface->h };
+                SDL_RenderCopy(ui->renderer, textTexture, NULL, &rect);
                 SDL_DestroyTexture(textTexture);
             }
-            
             SDL_FreeSurface(textSurface);
         }
+        offsetY += 25;
     }
-    
+
+    // Render material advantage
+    if (ui->font) {
+        char advantageText[32];
+        sprintf(advantageText, "Advantage: %s%d", advantage > 0 ? "+" : "", advantage);
+        SDL_Color textColor = {200, 200, 200, 255};
+        SDL_Surface *textSurface = TTF_RenderText_Blended(ui->font, advantageText, textColor);
+        if (textSurface) {
+            SDL_Texture *textTexture = SDL_CreateTextureFromSurface(ui->renderer, textSurface);
+            if (textTexture) {
+                SDL_Rect rect = { baseX, offsetY, textSurface->w, textSurface->h };
+                SDL_RenderCopy(ui->renderer, textTexture, NULL, &rect);
+                SDL_DestroyTexture(textTexture);
+            }
+            SDL_FreeSurface(textSurface);
+        }
+        offsetY += 40;
+    }
+
     // Display captured pieces (simplified representation)
     // For white pieces captured by black
-    int baseX = BOARD_OFFSET_X + BOARD_SIZE_PX + 20;
-    int offsetY = BOARD_OFFSET_Y;
     if (ui->font) {
         SDL_Color textColor = {200, 200, 200, 255};
         SDL_Surface *labelSurface = TTF_RenderText_Blended(ui->font, "Captured White:", textColor);
@@ -1368,7 +1377,7 @@ void renderCapturedPieces(UIContext *ui) {
     }
     
     // For black pieces captured by white
-    offsetY = BOARD_OFFSET_Y + 60;
+    offsetY += 60;
     if (ui->font) {
         SDL_Color textColor = {200, 200, 200, 255};
         SDL_Surface *labelSurface = TTF_RenderText_Blended(ui->font, "Captured Black:", textColor);
